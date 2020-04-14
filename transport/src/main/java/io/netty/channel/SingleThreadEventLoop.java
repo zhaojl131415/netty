@@ -15,6 +15,7 @@
  */
 package io.netty.channel;
 
+import io.netty.channel.nio.AbstractNioMessageChannel;
 import io.netty.util.concurrent.RejectedExecutionHandler;
 import io.netty.util.concurrent.RejectedExecutionHandlers;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
@@ -83,6 +84,7 @@ public abstract class SingleThreadEventLoop extends SingleThreadEventExecutor im
      */
     @Override
     public ChannelFuture register(Channel channel) {
+        // this : NioEventLoop
         return register(new DefaultChannelPromise(channel, this));
     }
 
@@ -95,7 +97,12 @@ public abstract class SingleThreadEventLoop extends SingleThreadEventExecutor im
     public ChannelFuture register(final ChannelPromise promise) {
         ObjectUtil.checkNotNull(promise, "promise");
         // promise.channel() = NioServerSocketChannel
-        // promise.channel().unsafe() = io.netty.channel.AbstractChannel.unsafe = new NioMessageUnsafe()
+        // io.netty.channel.AbstractChannel.unsafe
+        /**
+         * promise.channel().unsafe() = {@link AbstractChannel#unsafe} = new  {@link AbstractNioMessageChannel.NioMessageUnsafe}()
+         *
+         * {@link AbstractChannel.AbstractUnsafe#register(io.netty.channel.EventLoop, io.netty.channel.ChannelPromise)}
+         */
         promise.channel().unsafe().register(this, promise);
         return promise;
     }
@@ -147,8 +154,15 @@ public abstract class SingleThreadEventLoop extends SingleThreadEventExecutor im
         runAllTasksFrom(tailTasks);
     }
 
+
+    /**
+     * 判断taskQueue或者tailTasks队列是否不为空
+     * 两者只要有一个有值, 就返回true
+     * @return
+     */
     @Override
     protected boolean hasTasks() {
+        // super.hasTasks(): !taskQueue.isEmpty()
         return super.hasTasks() || !tailTasks.isEmpty();
     }
 

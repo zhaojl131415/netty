@@ -15,13 +15,7 @@
  */
 package io.netty.channel.nio;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelException;
-import io.netty.channel.EventLoop;
-import io.netty.channel.EventLoopException;
-import io.netty.channel.EventLoopTaskQueueFactory;
-import io.netty.channel.SelectStrategy;
-import io.netty.channel.SingleThreadEventLoop;
+import io.netty.channel.*;
 import io.netty.util.IntSupplier;
 import io.netty.util.concurrent.RejectedExecutionHandler;
 import io.netty.util.internal.ObjectUtil;
@@ -145,9 +139,9 @@ public final class NioEventLoop extends SingleThreadEventLoop {
 
         // 打开Selector
         final SelectorTuple selectorTuple = openSelector();
-        // 替换了数据结构selectedKeys publicSelectedKeys的原生selector
-        this.selector = selectorTuple.selector;
         // 子类包装的selector 底层数据结构也是被替换了的
+        this.selector = selectorTuple.selector;
+        // 替换了数据结构selectedKeys publicSelectedKeys的原生selector
         this.unwrappedSelector = selectorTuple.unwrappedSelector;
     }
 
@@ -456,16 +450,20 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         }
     }
 
-    // 主线程要做的时
+    // 主线程要做的事
     @Override
     protected void run() {
         int selectCnt = 0;
+        // 事件循环
         for (;;) {
             try {
                 int strategy;
                 try {
-                    // hasTasks() 若taskQueue或tailTask任务队列中有任务返回false,没有则返回true
+                    // hasTasks() 若taskQueue或tailTask任务队列有任务返回false,否则返回true
                     // strategy有任务返回selectNow()的返回值, 没有任务返回-1
+                    /**
+                     * {@link DefaultSelectStrategy#calculateStrategy(io.netty.util.IntSupplier, boolean) }
+                     */
                     strategy = selectStrategy.calculateStrategy(selectNowSupplier, hasTasks());
                     switch (strategy) {
                     case SelectStrategy.CONTINUE:
@@ -831,6 +829,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         return unwrappedSelector;
     }
 
+    // 立即执行, 不会阻塞的selectNow()方法
     int selectNow() throws IOException {
         return selector.selectNow();
     }

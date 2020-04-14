@@ -98,8 +98,10 @@ public abstract class MultithreadEventLoopGroup extends MultithreadEventExecutor
      */
     @Override
     public ChannelFuture register(Channel channel) {
-        // next() = NioEventLoop: 从executors所表示的NioEventLoop对象数组中返回NioEventLoop对象
-        // io.netty.channel.SingleThreadEventLoop.register(io.netty.channel.Channel)
+        /**
+         * next() = NioEventLoop: 从executors所表示的NioEventLoop对象数组中返回NioEventLoop对象
+         * {@link SingleThreadEventLoop#register(io.netty.channel.Channel)}
+         */
         return next().register(channel);
     }
 

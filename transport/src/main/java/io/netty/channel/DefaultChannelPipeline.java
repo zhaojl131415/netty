@@ -99,9 +99,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         succeededFuture = new SucceededChannelFuture(channel, null);
         voidPromise =  new VoidChannelPromise(channel, true);
 
-        // 创建尾节点
+        // 创建尾节点: 入栈处理器
         tail = new TailContext(this);
-        // 创建头节点  头节点维护了AbstractChannel中的unsafe对象
+        // 创建头节点: 既是入栈处理器也是出栈处理器  头节点维护了AbstractChannel中的unsafe对象
         head = new HeadContext(this);
 
         head.next = tail;
@@ -202,14 +202,29 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         return addLast(null, name, handler);
     }
 
+    /**
+     *
+     * @param group    the {@link EventExecutorGroup} which will be used to execute the {@link ChannelHandler}
+     *                 methods
+     * @param name     the name of the handler to append
+     * @param handler  the handler to append
+     *
+     * @param group null
+     * @param name null
+     * @param handler new ChannelInitializer<Channel>()
+     *
+     * @return
+     */
     @Override
     public final ChannelPipeline addLast(EventExecutorGroup group, String name, ChannelHandler handler) {
         final AbstractChannelHandlerContext newCtx;
         synchronized (this) {
+            // 检查添加
             checkMultiplicity(handler);
 
             newCtx = newContext(group, filterName(name, handler), handler);
 
+            // head - ChannelInitializer - tail
             addLast0(newCtx);
 
             // If the registered is false it means that the channel was not registered on an eventLoop yet.
@@ -284,6 +299,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         ctx.prev = newCtx;
     }
 
+    // 如果没有指定名字, 通过处理器类的类型生成一个
     private String filterName(String name, ChannelHandler handler) {
         if (name == null) {
             return generateName(handler);
@@ -385,6 +401,10 @@ public class DefaultChannelPipeline implements ChannelPipeline {
             if (h == null) {
                 break;
             }
+            /**
+             * executor : null
+             * h : new ChannelInitializer<Channel>()
+             */
             addLast(executor, null, h);
         }
 
@@ -599,9 +619,17 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         oldCtx.next = newCtx;
     }
 
+    /**
+     * @param handler new ChannelInitializer<Channel>()
+     */
     private static void checkMultiplicity(ChannelHandler handler) {
+
         if (handler instanceof ChannelHandlerAdapter) {
             ChannelHandlerAdapter h = (ChannelHandlerAdapter) handler;
+            /**
+             * 判断这个处理器是否添加 @ChannelHandler.Sharable 注解,
+             * 如果添加了表示为单例共享的, 不能重复添加
+             */
             if (!h.isSharable() && h.added) {
                 throw new ChannelPipelineException(
                         h.getClass().getName() +
@@ -654,6 +682,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
             firstRegistration = false;
             // We are now registered to the EventLoop. It's time to call the callbacks for the ChannelHandlers,
             // that were added before the registration was done.
+            // 我们现在注册到EventLoop。现在是调用在完成注册之前添加的ChannelHandlers的回调的时候了。
             callHandlerAddedForAllHandlers();
         }
     }
@@ -1117,6 +1146,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         // This must happen outside of the synchronized(...) block as otherwise handlerAdded(...) may be called while
         // holding the lock and so produce a deadlock if handlerAdded(...) will try to add another handler from outside
         // the EventLoop.
+        // 这必须发生在synchronized(…)块之外，否则handlerAdded(…)可能在持有锁时被调用，因此如果handlerAdded(…)试图从EventLoop之外添加另一个处理程序，就会产生死锁。
         PendingHandlerCallback task = pendingHandlerCallbackHead;
         while (task != null) {
             task.execute();

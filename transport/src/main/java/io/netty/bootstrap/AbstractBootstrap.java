@@ -16,16 +16,8 @@
 
 package io.netty.bootstrap;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
-import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandler;
-import io.netty.channel.ChannelOption;
-import io.netty.channel.ChannelPromise;
-import io.netty.channel.DefaultChannelPromise;
-import io.netty.channel.EventLoop;
-import io.netty.channel.EventLoopGroup;
-import io.netty.channel.ReflectiveChannelFactory;
+import io.netty.channel.*;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.GlobalEventExecutor;
@@ -326,10 +318,12 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
              * channelFactory = new ReflectiveChannelFactory<C>(NioServerSocketChannel);
              * channel = NioServerSocketChannel 通过工厂调用构造方法实例化NioServerSocketChannel
              * 这里其实还有隐藏代码：因为是调用构造方法实例化NioServerSocketChannel, 所以会执行NioServerSocketChannel构造方法代码
-             * io.netty.channel.socket.nio.NioServerSocketChannel.NioServerSocketChannel()
+             * 通过反射调用NioServerSocketChannel的构造方法: {@link NioServerSocketChannel#NioServerSocketChannel()}
              */
             channel = channelFactory.newChannel();
-            // io.netty.bootstrap.ServerBootstrap.init
+            /**
+             * {@link ServerBootstrap#init(io.netty.channel.Channel)}
+             */
             init(channel);
         } catch (Throwable t) {
             if (channel != null) {
@@ -341,8 +335,11 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
             // as the Channel is not registered yet we need to force the usage of the GlobalEventExecutor
             return new DefaultChannelPromise(new FailedChannel(), GlobalEventExecutor.INSTANCE).setFailure(t);
         }
-        // config().group() = bossGroup
-        // io.netty.channel.MultithreadEventLoopGroup.register(io.netty.channel.Channel)
+        //
+        /**
+         * config().group() = bossGroup
+         * {@link MultithreadEventLoopGroup#register(io.netty.channel.Channel)}
+         */
         ChannelFuture regFuture = config().group().register(channel);
         if (regFuture.cause() != null) {
             if (channel.isRegistered()) {
