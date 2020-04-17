@@ -15,7 +15,7 @@ import io.netty.handler.codec.string.StringDecoder;
 public class NettyServer {
     public static void main(String[] args) throws InterruptedException {
         //就是一个死循环，不停地检测IO事件，处理IO事件，执行任务
-        //创建一个线程组:接受客户端连接   主线程
+        //创建一个线程组: 接受客户端连接   主线程，一般只有一个，如果有多个端口需要绑定可以使用多个（跟句柄限制有关系）
         EventLoopGroup bossGroup = new NioEventLoopGroup(1);//cpu核心数*2
         //创建一个线程组:接受网络操作   工作线程
         EventLoopGroup workerGroup = new NioEventLoopGroup();  //cpu核心数*2
@@ -27,15 +27,16 @@ public class NettyServer {
         // 接到的活分配给工人干，放到这里，bossGroup的作用就是不断地accept到新的连接，将新的连接丢给workerGroup来处理
         serverBootstrap.group(bossGroup, workerGroup)
                 //设置使用NioServerSocketChannel作为服务器通道的实现
+                // 反射实现
                 .channel(NioServerSocketChannel.class)
                 //设置线程队列中等待连接的个数
                 .option(ChannelOption.SO_BACKLOG, 128)
                 //保持活动连接状态
                 .childOption(ChannelOption.SO_KEEPALIVE, true)
-                //表示服务器启动过程中，需要经过哪些流程，这里NettyTestHendler最终的顶层接口为ChannelHander，
+                // 服务端处理器：表示服务器启动过程中，pipeline需要经过哪些流程，这里NettyTestHendler最终的顶层接口为ChannelHander，
                 // 是netty的一大核心概念，表示数据流经过的处理器
                 .handler(new NettyTestHandler())
-                //表示一条新的连接进来之后，该怎么处理，也就是上面所说的，老板如何给工人配活
+                // 客户端处理器：表示一条新的连接进来之后，pipeline需要经过哪些流程，也就是上面所说的，老板如何给工人配活
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     @Override
                     protected void initChannel(NioSocketChannel nioSocketChannel) throws Exception {

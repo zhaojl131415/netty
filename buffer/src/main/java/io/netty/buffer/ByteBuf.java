@@ -162,10 +162,10 @@ import java.nio.charset.UnsupportedCharsetException;
  *
  *      +-------------------+------------------+------------------+
  *      | discardable bytes |  readable bytes  |  writable bytes  |
+ *      | 已读，可废弃      |    已写，可读    |        可写      |
  *      +-------------------+------------------+------------------+
  *      |                   |                  |                  |
  *      0      <=      readerIndex   <=   writerIndex    <=    capacity
- *
  *
  *  AFTER clear()
  *
