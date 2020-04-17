@@ -9,6 +9,13 @@ import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.CharsetUtil;
 
 //客户端业务处理类
+
+/**
+ * 添加了 @ChannelHandler.Sharable注解, 表示这个处理器为共享的
+ * 可以理解为spring中的单例, 如果没加, 就是原型的, 每次都会新建一个
+ *
+ * 可以的话尽量使用单例, 节约空间, 但是如果处理器中包含全局的成员变量, 最好不要使用单例
+ */
 @ChannelHandler.Sharable
 public class NettyTestHandler extends ChannelInboundHandlerAdapter{
 

@@ -478,6 +478,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
      */
     protected boolean runAllTasks(long timeoutNanos) {
         fetchFromScheduledTaskQueue();
+        // 获取任务: 之前的register0(promise)的任务在这就能获取到
         Runnable task = pollTask();
         if (task == null) {
             // 如果没取到任务，尝试再获取一次，如果有就执行
@@ -490,7 +491,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         long lastExecutionTime;
         // 循环执行任务，到了指定时间，或者没有任务执行了
         for (;;) {
-
+            // 执行任务, 调用register0(promise)方法
             safeExecute(task);
 
             runTasks ++;
@@ -841,6 +842,10 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         return isTerminated();
     }
 
+    /**
+     *
+     * @param task 执行register0(promise)方法
+     */
     @Override
     public void execute(Runnable task) {
         ObjectUtil.checkNotNull(task, "task");
@@ -852,6 +857,11 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         execute(ObjectUtil.checkNotNull(task, "task"), false);
     }
 
+    /**
+     *
+     * @param task 执行register0(promise)方法
+     * @param immediate
+     */
     private void execute(Runnable task, boolean immediate) {
 
         boolean inEventLoop = inEventLoop();
@@ -1008,6 +1018,9 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         return false;
     }
 
+    /**
+     * 真正启动线程
+     */
     private void doStartThread() {
         // 断言thread为空，如果不为空抛异常
         assert thread == null;
@@ -1024,7 +1037,9 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
                 boolean success = false;
                 updateLastExecutionTime();
                 try {
-                    // io.netty.channel.nio.NioEventLoop.run
+                    /**
+                     * {@link io.netty.channel.nio.NioEventLoop#run()}
+                     */
                     SingleThreadEventExecutor.this.run();
                     success = true;
                 } catch (Throwable t) {

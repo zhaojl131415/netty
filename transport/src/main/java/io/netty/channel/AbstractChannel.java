@@ -16,6 +16,8 @@
 package io.netty.channel;
 
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.nio.AbstractNioChannel;
+import io.netty.channel.nio.AbstractNioMessageChannel;
 import io.netty.channel.socket.ChannelOutputShutdownEvent;
 import io.netty.channel.socket.ChannelOutputShutdownException;
 import io.netty.util.DefaultAttributeMap;
@@ -72,7 +74,9 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
     protected AbstractChannel(Channel parent) {
         this.parent = parent;
         id = newId();
-        // new NioMessageUnsafe()
+        /**
+         * {@link AbstractNioMessageChannel#newUnsafe()}
+         */
         unsafe = newUnsafe();
         pipeline = newChannelPipeline();
     }
@@ -475,13 +479,16 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
             /**
              * 判断SingleThreadEventExecutor所缓存的线程是否为当前执行的线程
-             * io.netty.util.concurrent.SingleThreadEventExecutor.inEventLoop
+             *
+             * {@link SingleThreadEventExecutor#inEventLoop(java.lang.Thread)}
              */
             if (eventLoop.inEventLoop()) {
                 register0(promise);
             } else {
                 try {
-                    // execute: io.netty.util.concurrent.SingleThreadEventExecutor.execute(java.lang.Runnable)
+                    /**
+                     * {@link SingleThreadEventExecutor#execute(java.lang.Runnable)}
+                     */
                     eventLoop.execute(new Runnable() {
                         @Override
                         public void run() {
@@ -504,16 +511,22 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
             try {
                 // check if the channel is still open as it could be closed in the mean time when the register
                 // call was outside of the eventLoop
+                // 检查通道是否仍然处于打开状态，因为当寄存器调用在eventLoop之外时，它可能会在平均时间内关闭
                 if (!promise.setUncancellable() || !ensureOpen(promise)) {
                     return;
                 }
                 boolean firstRegistration = neverRegistered;
+                /**
+                 * 调用NioServerSocketChannel通过反射创建出来的nio底层channel的register()  选择器看不同的操作系统
+                 * {@link AbstractNioChannel#doRegister()}
+                 */
                 doRegister();
                 neverRegistered = false;
                 registered = true;
 
                 // Ensure we call handlerAdded(...) before we actually notify the promise. This is needed as the
                 // user may already fire events through the pipeline in the ChannelFutureListener.
+                // 确保在我们实际通知承诺之前调用handlerAdded(…)。这是必需的，因为用户可能已经通过ChannelFutureListener中的管道触发了事件。
                 pipeline.invokeHandlerAddedIfNeeded();
 
                 safeSetSuccess(promise);
