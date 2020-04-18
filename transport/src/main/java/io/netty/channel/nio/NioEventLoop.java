@@ -18,12 +18,15 @@ package io.netty.channel.nio;
 import io.netty.channel.*;
 import io.netty.util.IntSupplier;
 import io.netty.util.concurrent.RejectedExecutionHandler;
+import io.netty.util.concurrent.SingleThreadEventExecutor;
+import io.netty.util.concurrent.ThreadPerTaskExecutor;
 import io.netty.util.internal.ObjectUtil;
 import io.netty.util.internal.PlatformDependent;
 import io.netty.util.internal.ReflectionUtil;
 import io.netty.util.internal.SystemPropertyUtil;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
+import sun.nio.ch.SelectorImpl;
 
 import java.io.IOException;
 import java.lang.reflect.Field;
@@ -126,14 +129,30 @@ public final class NioEventLoop extends SingleThreadEventLoop {
     private int cancelledKeys;
     private boolean needsToSelectAgain;
 
+    /**
+     *
+     * @param parent  {@link NioEventLoopGroup}
+     * @param executor  {@link ThreadPerTaskExecutor}
+     * @param selectorProvider 可以通过它调用openSelector()/openServerSocketChannel()方法打开Selector/ServerSocketChannel对象
+     * @param strategy {@link DefaultSelectStrategyFactory}
+     * @param rejectedExecutionHandler 丢弃任务，并抛出RejectedExecutionException异常
+     * @param queueFactory 一般为null
+     *
+     */
     NioEventLoop(NioEventLoopGroup parent, Executor executor, SelectorProvider selectorProvider,
                  SelectStrategy strategy, RejectedExecutionHandler rejectedExecutionHandler,
                  EventLoopTaskQueueFactory queueFactory) {
-        // newTaskQueue(queueFactory), newTaskQueue(queueFactory) 创建了两个任务队列
+        /**
+         * newTaskQueue(queueFactory), newTaskQueue(queueFactory) 创建了两个无界的任务队列, 分别赋值给了
+         * @see SingleThreadEventExecutor#taskQueue
+         * @see SingleThreadEventLoop#tailTasks
+         */
         super(parent, executor, false, newTaskQueue(queueFactory), newTaskQueue(queueFactory),
                 rejectedExecutionHandler);
+
         // selectorProvider 可以通过它调用openSelector()/openServerSocketChannel()方法打开Selector/ServerSocketChannel对象
         this.provider = ObjectUtil.checkNotNull(selectorProvider, "selectorProvider");
+
         // 默认选择策略工厂: new DefaultSelectStrategyFactory().newSelectStrategy();
         this.selectStrategy = ObjectUtil.checkNotNull(strategy, "selectStrategy");
 
@@ -145,9 +164,14 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         this.unwrappedSelector = selectorTuple.unwrappedSelector;
     }
 
+    /**
+     * @param queueFactory 一般为null
+     * @return
+     */
     private static Queue<Runnable> newTaskQueue(
             EventLoopTaskQueueFactory queueFactory) {
         if (queueFactory == null) {
+            // 一个可能是无界的多生产者单消费者队列。
             return newTaskQueue0(DEFAULT_MAX_PENDING_TASKS);
         }
         return queueFactory.newTaskQueue(DEFAULT_MAX_PENDING_TASKS);
@@ -198,6 +222,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             }
         });
 
+        // 这里一般不会进
         if (!(maybeSelectorImplClass instanceof Class) ||
             // ensure the current selector implementation is what we can instrument.
             !((Class<?>) maybeSelectorImplClass).isAssignableFrom(unwrappedSelector.getClass())) {
@@ -208,7 +233,9 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             return new SelectorTuple(unwrappedSelector);
         }
 
-        // sun.nio.ch.SelectorImpl
+        /**
+         * @see SelectorImpl
+         */
         final Class<?> selectorImplClass = (Class<?>) maybeSelectorImplClass;
         // netty自定义的set
         final SelectedSelectionKeySet selectedKeySet = new SelectedSelectionKeySet();
@@ -217,9 +244,13 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             @Override
             public Object run() {
                 try {
-                    // 找的是：sun.nio.ch.SelectorImpl.selectedKeys
+                    /**
+                     * @see SelectorImpl#selectedKeys
+                     */
                     Field selectedKeysField = selectorImplClass.getDeclaredField("selectedKeys");
-                    // 找的是：sun.nio.ch.SelectorImpl.publicSelectedKeys
+                    /**
+                     * @see SelectorImpl#publicSelectedKeys
+                     */
                     Field publicSelectedKeysField = selectorImplClass.getDeclaredField("publicSelectedKeys");
 
                     // 判断java版本
@@ -251,12 +282,13 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                         return cause;
                     }
                     /**
+                     * 替换unwrappedSelector的实现类SelectorImpl中 selectedKeysField 和 publicSelectedKeysField 原先使用的Set实现类  HashSet -> SelectionKey[]
+                     *
                      * SelectedSelectionKeySet使用数组代替原Selector的中的HashSet，提高性能
                      *
                      * 当服务器监听到事件后会封装成SelectionKey放到HashSet中, 然后程序就可以从这个HashSet中取出事件进行处理.
                      * 而HashSet的add方法的时间复杂度是O(n), 为此Netty通过反射机制, 将底层的这个HashSet用数组替换了, 毕竟向数组中添加数据的时间复杂度是O(1)
                      */
-                    // 替换SelectorImpl中原先使用的Set实现类
                     selectedKeysField.set(unwrappedSelector, selectedKeySet);
                     publicSelectedKeysField.set(unwrappedSelector, selectedKeySet);
                     return null;
@@ -293,8 +325,12 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         return newTaskQueue0(maxPendingTasks);
     }
 
+    /**
+     * @param maxPendingTasks {@link Integer.MAX_VALUE}
+     * @return 一个可能是无界的多生产者单消费者队列。
+     */
     private static Queue<Runnable> newTaskQueue0(int maxPendingTasks) {
-        // This event loop never calls takeTask()
+        // This event loop never calls takeTask() 这个事件循环从不调用takeTask()
         return maxPendingTasks == Integer.MAX_VALUE ? PlatformDependent.<Runnable>newMpscQueue()
                 : PlatformDependent.<Runnable>newMpscQueue(maxPendingTasks);
     }
@@ -450,7 +486,12 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         }
     }
 
-    // 主线程要做的事
+    /**
+     * 主线程要做的事
+     * 1、轮询IO事件, 执行select操作
+     * 2、处理产生网络IO事件的channel
+     * 3、处理任务队列: 调用register0(promise)方法
+     */
     @Override
     protected void run() {
         int selectCnt = 0;

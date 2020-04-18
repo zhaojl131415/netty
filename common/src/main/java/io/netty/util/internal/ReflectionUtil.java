@@ -25,6 +25,8 @@ public final class ReflectionUtil {
      * Try to call {@link AccessibleObject#setAccessible(boolean)} but will catch any {@link SecurityException} and
      * {@link java.lang.reflect.InaccessibleObjectException} and return it.
      * The caller must check if it returns {@code null} and if not handle the returned exception.
+     *
+     * 设置对私有对象的访问
      */
     public static Throwable trySetAccessible(AccessibleObject object, boolean checkAccessible) {
         if (checkAccessible && !PlatformDependent0.isExplicitTryReflectionSetAccessible()) {

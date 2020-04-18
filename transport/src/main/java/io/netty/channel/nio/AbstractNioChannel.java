@@ -86,7 +86,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         this.ch = ch;
         this.readInterestOp = readInterestOp;
         try {
-            // 设置通道非阻塞 相当于：ssc.configureBlocking(false);
+            // 设置通道非阻塞 相当于nio原生的：ssc.configureBlocking(false);
             ch.configureBlocking(false);
         } catch (IOException e) {
             try {

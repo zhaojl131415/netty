@@ -70,14 +70,26 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
      *
      * @param parent null 此通道的父通道。如果没有父元素，则为{@code null}。
      *        the parent of this channel. {@code null} if there's no parent.
+     *
+     *
+     * Channel和Pipeline之间是互通的
+     *                          ┌----> head
+     * Channel <----> pipeline -┆
+     *                          └----> tail
      */
     protected AbstractChannel(Channel parent) {
         this.parent = parent;
+        // ChannelId
         id = newId();
         /**
-         * {@link AbstractNioMessageChannel#newUnsafe()}
+         * 读写数据基础类
+         * @see AbstractNioMessageChannel#newUnsafe()
+         * unsafe = new NioMessageUnsafe()
          */
         unsafe = newUnsafe();
+        /**
+         * @see DefaultChannelPipeline#DefaultChannelPipeline(io.netty.channel.Channel)
+         */
         pipeline = newChannelPipeline();
     }
 
@@ -474,7 +486,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 return;
             }
 
-            // AbstractChannel.this.eventLoop = NioEventLoop
+            // AbstractChannel.this.eventLoop = NioEventLoop = SingleThreadEventLoop
             AbstractChannel.this.eventLoop = eventLoop;
 
             /**
@@ -492,7 +504,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                     eventLoop.execute(new Runnable() {
                         @Override
                         public void run() {
-                            //
+                            // 把此方法作为一个任务传给线程
                             register0(promise);
                         }
                     });

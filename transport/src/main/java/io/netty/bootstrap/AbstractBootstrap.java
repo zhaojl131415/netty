@@ -54,8 +54,10 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     private volatile ChannelFactory<? extends C> channelFactory;
     private volatile SocketAddress localAddress;
 
-    // The order in which ChannelOptions are applied is important they may depend on each other for validation
-    // purposes.
+    /**
+     * The order in which ChannelOptions are applied is important they may depend on each other for validation purposes.
+     * 应用ChannelOptions的顺序很重要，它们在验证时可能相互依赖。
+     */
     private final Map<ChannelOption<?>, Object> options = new LinkedHashMap<ChannelOption<?>, Object>();
     private final Map<AttributeKey<?>, Object> attrs = new ConcurrentHashMap<AttributeKey<?>, Object>();
     private volatile ChannelHandler handler;
@@ -168,6 +170,10 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     }
 
     /**
+     * 将指定的option和值 put到Map中
+     *
+     * 允许指定一个{@link ChannelOption}，用于创建{@link Channel}实例。
+     * 使用{@code null}的值来删除之前设置的{@link ChannelOption}。
      * Allow to specify a {@link ChannelOption} which is used for the {@link Channel} instances once they got
      * created. Use a value of {@code null} to remove a previous set {@link ChannelOption}.
      */
@@ -314,14 +320,17 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         Channel channel = null;
         try {
             /**
-             * 通过反射创建NioServerSocketChannel
+             * 通过构造器反射创建NioServerSocketChannel
              * channelFactory = new ReflectiveChannelFactory<C>(NioServerSocketChannel);
+             * @see ReflectiveChannelFactory#newChannel()
+             *
              * channel = NioServerSocketChannel 通过工厂调用构造方法实例化NioServerSocketChannel
              * 这里其实还有隐藏代码：因为是调用构造方法实例化NioServerSocketChannel, 所以会执行NioServerSocketChannel构造方法代码
              * 通过反射调用NioServerSocketChannel的构造方法: {@link NioServerSocketChannel#NioServerSocketChannel()}
              */
             channel = channelFactory.newChannel();
             /**
+             * 初始化
              * {@link ServerBootstrap#init(io.netty.channel.Channel)}
              */
             init(channel);
@@ -338,7 +347,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         //
         /**
          * config().group() = bossGroup
-         * {@link MultithreadEventLoopGroup#register(io.netty.channel.Channel)}
+         * @see MultithreadEventLoopGroup#register(io.netty.channel.Channel)
          */
         ChannelFuture regFuture = config().group().register(channel);
         if (regFuture.cause() != null) {

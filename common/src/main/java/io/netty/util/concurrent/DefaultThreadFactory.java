@@ -78,7 +78,7 @@ public class DefaultThreadFactory implements ThreadFactory {
     }
 
     /**
-     * 根据类获取类名，并把首字母转换为小写
+     * 根据类的类型获取类名，并把首字母转换为小写
      * @param poolType
      * @return
      */
@@ -117,8 +117,11 @@ public class DefaultThreadFactory implements ThreadFactory {
             throw new IllegalArgumentException(
                     "priority: " + priority + " (expected: Thread.MIN_PRIORITY <= priority <= Thread.MAX_PRIORITY)");
         }
-        // poolId.incrementAndGet() 原子计数器
-        // nioEventLoopGroup-(原子计数器++)-
+        /**
+         * 为了让创建出来的名字不冲突:
+         * 使用了poolId.incrementAndGet() 原子计数器
+         * nioEventLoopGroup-(原子计数器++)-
+         */
         prefix = poolName + '-' + poolId.incrementAndGet() + '-';
         this.daemon = daemon;
         this.priority = priority;
@@ -126,7 +129,7 @@ public class DefaultThreadFactory implements ThreadFactory {
     }
 
     public DefaultThreadFactory(String poolName, boolean daemon, int priority) {
-        // System.getSecurityManager() == null 判断是否有安全管理器
+        // System.getSecurityManager() == null 判断是否有安全管理器, 判断操作时是否有权限
         this(poolName, daemon, priority, System.getSecurityManager() == null ?
                 Thread.currentThread().getThreadGroup() : System.getSecurityManager().getThreadGroup());
     }
@@ -138,6 +141,7 @@ public class DefaultThreadFactory implements ThreadFactory {
      */
     @Override
     public Thread newThread(Runnable r) {
+        // FastThreadLocalRunnable.wrap(r) Runnable包装: 本质还是Runnable
         Thread t = newThread(FastThreadLocalRunnable.wrap(r), prefix + nextId.incrementAndGet());
         try {
             if (t.isDaemon() != daemon) {

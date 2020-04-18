@@ -91,8 +91,12 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
 
         if (executor == null) {
             /**
+             * 实例化一个线程执行器, 后续可以通过调用这个执行器的execute方法创建一个线程(不执行)
+             * @see ThreadPerTaskExecutor#execute(java.lang.Runnable)
+             *
              * newDefaultThreadFactory() 创建默认线程工厂
              * 抽象类方法调用子类的实现。
+             * @see io.netty.channel.MultithreadEventLoopGroup#newDefaultThreadFactory()
              */
             executor = new ThreadPerTaskExecutor(newDefaultThreadFactory());
         }
@@ -104,8 +108,11 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
             // 出现异常标识
             boolean success = false;
             try {
-                // 创建nThreads个NioEventLoop存到children数组中
-                // io.netty.channel.nio.NioEventLoopGroup.newChild
+                /**
+                 * 创建nThreads个NioEventLoop存到children数组中
+                 *
+                 * @see io.netty.channel.nio.NioEventLoopGroup#newChild(java.util.concurrent.Executor, java.lang.Object...)
+                 */
                 children[i] = newChild(executor, args);
                 success = true;
             } catch (Exception e) {
@@ -133,8 +140,14 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
             }
         }
 
-        // children：NioEventLoop的对象数组
-        // chooser = PowerOfTwoEventExecutorChooser/GenericEventExecutorChooser其中一种
+        /**
+         * chooserFactory: 默认事件执行选择器工厂
+         * children：NioEventLoop的对象数组
+         *
+         * chooser: 为以下两种其中的一种, 没觉得两种有什么有多大的区别, 只是PowerOfTwoEventExecutorChooser性能更好一点
+         * @see DefaultEventExecutorChooserFactory.PowerOfTwoEventExecutorChooser
+         * @see DefaultEventExecutorChooserFactory.GenericEventExecutorChooser
+         */
         chooser = chooserFactory.newChooser(children);
 
         final FutureListener<Object> terminationListener = new FutureListener<Object>() {

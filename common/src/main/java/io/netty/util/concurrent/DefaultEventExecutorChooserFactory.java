@@ -37,7 +37,7 @@ public final class DefaultEventExecutorChooserFactory implements EventExecutorCh
     @SuppressWarnings("unchecked")
     @Override
     public EventExecutorChooser newChooser(EventExecutor[] executors) {
-        // 判断数组是否为2的指数幂：只是为了更高效获取
+        // 判断NioEventLoop的对象数组的长度是否为2的指数幂：只是为了更高效获取
         if (isPowerOfTwo(executors.length)) {
             // 通过位运算获取
             return new PowerOfTwoEventExecutorChooser(executors);

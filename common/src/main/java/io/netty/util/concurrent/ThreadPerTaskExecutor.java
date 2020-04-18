@@ -20,6 +20,10 @@ import io.netty.util.internal.ObjectUtil;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadFactory;
 
+/**
+ * Executor是一个JDK源码的顶层接口,在它里面只声明了一个execute(Runnable)方法, 返回值为void
+ * 参数为:Runnable类型,表示就是用来执行传进去的任务的
+ */
 public final class ThreadPerTaskExecutor implements Executor {
     private final ThreadFactory threadFactory;
 
@@ -34,7 +38,9 @@ public final class ThreadPerTaskExecutor implements Executor {
      */
     @Override
     public void execute(Runnable command) {
-        // io.netty.util.concurrent.DefaultThreadFactory.newThread(java.lang.Runnable)
+        /**
+         * @see DefaultThreadFactory#newThread(java.lang.Runnable)
+         */
         threadFactory.newThread(command).start();
     }
 }

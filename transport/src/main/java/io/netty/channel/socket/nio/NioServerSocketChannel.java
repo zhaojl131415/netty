@@ -15,6 +15,7 @@
  */
 package io.netty.channel.socket.nio;
 
+import io.netty.bootstrap.AbstractBootstrap;
 import io.netty.channel.ChannelException;
 import io.netty.channel.ChannelMetadata;
 import io.netty.channel.ChannelOption;
@@ -80,10 +81,10 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
 
     /**
      * Create a new instance
-     * 通过反射创建NioServerSocketChannel调用
+     * @see AbstractBootstrap#initAndRegister() 通过构造方法反射创建NioServerSocketChannel调用
      */
     public NioServerSocketChannel() {
-        // 相当于调用：SelectorProvider.provider().openServerSocketChannel()
+        // newSocket(DEFAULT_SELECTOR_PROVIDER)相当于nio原生调用：SelectorProvider.provider().openServerSocketChannel()
         this(newSocket(DEFAULT_SELECTOR_PROVIDER));
     }
 

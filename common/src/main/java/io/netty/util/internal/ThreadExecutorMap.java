@@ -54,7 +54,11 @@ public final class ThreadExecutorMap {
         return new Executor() {
             @Override
             public void execute(final Runnable command) {
-                // apply(command, eventExecutor)返回的仍然是Runnable， 真正执行的是： command.run();
+                /**
+                 * 这里只是对执行器进行了一层包装
+                 * apply(command, eventExecutor)返回的仍然是Runnable，
+                 * 真正执行的是：调用command.run();时
+                 */
                 executor.execute(apply(command, eventExecutor));
             }
         };

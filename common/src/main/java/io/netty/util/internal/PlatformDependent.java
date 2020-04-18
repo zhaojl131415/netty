@@ -925,9 +925,10 @@ public final class PlatformDependent {
     }
 
     /**
+     * 创建一个新的{@link Queue}，它可以安全地用于多个生产者(不同的线程)和单个消费者(一个线程!)
      * Create a new {@link Queue} which is safe to use for multiple producers (different threads) and a single
      * consumer (one thread!).
-     * @return A MPSC queue which may be unbounded.
+     * @return A MPSC queue which may be unbounded. 一个可能是无界的多生产者单消费者队列。
      */
     public static <T> Queue<T> newMpscQueue() {
         return Mpsc.newMpscQueue();

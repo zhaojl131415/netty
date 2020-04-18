@@ -177,7 +177,9 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         this.addTaskWakesUp = addTaskWakesUp;
         // DEFAULT_MAX_PENDING_EXECUTOR_TASKS = Integer.MAX_VALUE
         this.maxPendingTasks = DEFAULT_MAX_PENDING_EXECUTOR_TASKS;
+        // 执行器
         this.executor = ThreadExecutorMap.apply(executor, this);
+        // 无界任务队列
         this.taskQueue = ObjectUtil.checkNotNull(taskQueue, "taskQueue");
         this.rejectedExecutionHandler = ObjectUtil.checkNotNull(rejectedHandler, "rejectedHandler");
     }
@@ -582,9 +584,14 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     /**
      * netty实现异步串行无锁化的关键
      *
-     * 判断当前类对象所缓存的线程是否为当前执行的线程
+     * 判断当前线程和之前创建NioEventLoop时绑定的那个IO线程是否一致,
+     * 如果是一样的, 说明此线程就是绑定的IO线程, 可以执行读写操作,
+     * 如果不一样, 那么说明是其他线程, 就要把读写操作封装成任务放在队列中, 由绑定的那个IO线程去执行.
+     *
      * @param thread Thread.currentThread()
      * @return
+     *
+     * @see SingleThreadEventExecutor#doStartThread()
      */
     @Override
     public boolean inEventLoop(Thread thread) {
@@ -863,9 +870,13 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
      * @param immediate
      */
     private void execute(Runnable task, boolean immediate) {
-
+        /**
+         * @see SingleThreadEventExecutor#inEventLoop(java.lang.Thread)
+         */
         boolean inEventLoop = inEventLoop();
-        // 将任务加入线程队列
+        /**
+         * 将任务加入线程队列, 这个队列为{@link io.netty.channel.nio.NioEventLoop}实例化时创建的两个无界队列中的第一个
+         */
         addTask(task);
         // 判断SingleThreadEventExecutor对象所缓存的线程是否为当前执行的线程
         if (!inEventLoop) {
@@ -1028,7 +1039,10 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         executor.execute(new Runnable() {
             @Override
             public void run() {
-                // 缓存当前线程
+                /**
+                 * 缓存当前线程
+                 * 再通过{@link SingleThreadEventExecutor#inEventLoop(java.lang.Thread)}判断是否当前线程, 会返回true, 就不会创建线程了
+                 */
                 thread = Thread.currentThread();
                 if (interrupted) {
                     thread.interrupt();
@@ -1038,7 +1052,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
                 updateLastExecutionTime();
                 try {
                     /**
-                     * {@link io.netty.channel.nio.NioEventLoop#run()}
+                     * @see io.netty.channel.nio.NioEventLoop#run()
                      */
                     SingleThreadEventExecutor.this.run();
                     success = true;

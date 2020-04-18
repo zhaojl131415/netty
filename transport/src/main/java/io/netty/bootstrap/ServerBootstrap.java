@@ -83,6 +83,8 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
     }
 
     /**
+     * 将指定的option和值 put到Map中
+     *
      * Allow to specify a {@link ChannelOption} which is used for the {@link Channel} instances once they get created
      * (after the acceptor accepted the {@link Channel}). Use a value of {@code null} to remove a previous set
      * {@link ChannelOption}.
@@ -131,10 +133,14 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         setChannelOptions(channel, newOptionsArray(), logger);
         // 设置用户自定义的attr参数
         setAttributes(channel, attrs0().entrySet().toArray(EMPTY_ATTRIBUTE_ARRAY));
-        // 获取ChannelPipeline: AbstractChannel.pipeline() --pipeline是在AbstractChannel实例化时被创建--> DefaultChannelPipeline
+        /**
+         * 获取ChannelPipeline: pipeline是在AbstractChannel实例化时被创建
+         * @see AbstractChannel#AbstractChannel(io.netty.channel.Channel)
+         * @see DefaultChannelPipeline#DefaultChannelPipeline(io.netty.channel.Channel)
+         */
         ChannelPipeline p = channel.pipeline();
 
-
+        // workerGroup
         final EventLoopGroup currentChildGroup = childGroup;
         final ChannelHandler currentChildHandler = childHandler;
         final Entry<ChannelOption<?>, Object>[] currentChildOptions;
@@ -145,6 +151,8 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
 
         /**
          * 将这个new ChannelInitializer<Channel>()添加到pipeline
+         * head - ChannelInitializer - tail
+         *
          * {@link DefaultChannelPipeline#addLast(io.netty.util.concurrent.EventExecutorGroup, io.netty.channel.ChannelHandler...) }
          */
         p.addLast(new ChannelInitializer<Channel>() {

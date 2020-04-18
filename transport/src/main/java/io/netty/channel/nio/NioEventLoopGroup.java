@@ -21,10 +21,7 @@ import io.netty.channel.DefaultSelectStrategyFactory;
 import io.netty.channel.EventLoopTaskQueueFactory;
 import io.netty.channel.MultithreadEventLoopGroup;
 import io.netty.channel.SelectStrategyFactory;
-import io.netty.util.concurrent.EventExecutor;
-import io.netty.util.concurrent.EventExecutorChooserFactory;
-import io.netty.util.concurrent.RejectedExecutionHandler;
-import io.netty.util.concurrent.RejectedExecutionHandlers;
+import io.netty.util.concurrent.*;
 
 import java.nio.channels.Selector;
 import java.nio.channels.spi.SelectorProvider;
@@ -72,12 +69,15 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
         this(nThreads, threadFactory, SelectorProvider.provider());
     }
 
+    /**
+     * @param nThreads 主节点线程数一般为1, 工作节点线程数一般不设置, 默认为:cpu核数*2
+     * @param executor 默认为null
+     */
     public NioEventLoopGroup(int nThreads, Executor executor) {
-        // executor 默认为null
         /**
          * SelectorProvider.provider(): 可以通过它调用openSelector()/openServerSocketChannel()方法打开Selector/ServerSocketChannel对象
-         *  Selector.open()底层就是调用：SelectorProvider.provider().openSelector();
-         *  ServerSocketChannel.open()底层就是调用：SelectorProvider.provider().openServerSocketChannel();
+         * Selector.open()底层就是调用：SelectorProvider.provider().openSelector();
+         * ServerSocketChannel.open()底层就是调用：SelectorProvider.provider().openServerSocketChannel();
          */
         this(nThreads, executor, SelectorProvider.provider());
     }
@@ -171,7 +171,7 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
 
     /**
      *
-     * @param executor
+     * @param executor {@link ThreadPerTaskExecutor}
      * @param args: selectorProvider 可以通过它调用openSelector()/openServerSocketChannel()方法打开Selector/ServerSocketChannel对象
      * @param args: selectStrategyFactory  默认选择策略工厂new DefaultSelectStrategyFactory();
      * @param args: new RejectedExecutionHandler(); 丢弃任务，并抛出RejectedExecutionException异常
@@ -180,8 +180,9 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
      */
     @Override
     protected EventLoop newChild(Executor executor, Object... args) throws Exception {
-        // 事件循环任务队列工厂： 判断参数长度, 如果长度为4，取最后一个，否则返回空
+        // 事件循环任务队列工厂：判断参数长度(一般为3), 如果长度为4，取最后一个，否则返回空
         EventLoopTaskQueueFactory queueFactory = args.length == 4 ? (EventLoopTaskQueueFactory) args[3] : null;
+        // this: NioEventLoopGroup
         return new NioEventLoop(this, executor, (SelectorProvider) args[0],
             ((SelectStrategyFactory) args[1]).newSelectStrategy(), (RejectedExecutionHandler) args[2], queueFactory);
     }

@@ -91,6 +91,12 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
     /**
      * 默认通道管道
+     *
+     * Channel和Pipeline之间是互通的
+     *                          ┌----> head
+     * Channel <----> pipeline -┆
+     *                          └----> tail
+     *
      * @param channel NioServerSocketChannel
      */
     protected DefaultChannelPipeline(Channel channel) {
@@ -106,6 +112,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
         head.next = tail;
         tail.prev = head;
+
+
+
     }
 
     final MessageSizeEstimator.Handle estimatorHandle() {
