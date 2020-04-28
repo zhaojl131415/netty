@@ -20,6 +20,7 @@ import io.netty.channel.nio.AbstractNioChannel;
 import io.netty.channel.nio.AbstractNioMessageChannel;
 import io.netty.channel.socket.ChannelOutputShutdownEvent;
 import io.netty.channel.socket.ChannelOutputShutdownException;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.DefaultAttributeMap;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
@@ -166,6 +167,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
     @Override
     public EventLoop eventLoop() {
+        // SingleThreadEventLoop
         EventLoop eventLoop = this.eventLoop;
         if (eventLoop == null) {
             throw new IllegalStateException("channel not registered to an event loop");
@@ -519,6 +521,9 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
             }
         }
 
+        /**
+         * @param promise DefaultChannelPromise
+         */
         private void register0(ChannelPromise promise) {
             try {
                 // check if the channel is still open as it could be closed in the mean time when the register
@@ -527,6 +532,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 if (!promise.setUncancellable() || !ensureOpen(promise)) {
                     return;
                 }
+                // 初始为true
                 boolean firstRegistration = neverRegistered;
                 /**
                  * 调用NioServerSocketChannel通过反射创建出来的nio底层channel的register()  选择器看不同的操作系统
@@ -587,6 +593,10 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
             boolean wasActive = isActive();
             try {
+                /**
+                 * 核心
+                 * @see NioServerSocketChannel#doBind(java.net.SocketAddress)
+                 */
                 doBind(localAddress);
             } catch (Throwable t) {
                 safeSetFailure(promise, t);

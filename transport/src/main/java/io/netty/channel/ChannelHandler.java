@@ -205,6 +205,8 @@ public interface ChannelHandler {
      * If this annotation is not specified, you have to create a new handler
      * instance every time you add it to a pipeline because it has unshared
      * state such as member variables.
+     * 如果未指定此注释，则每次将其添加到管道时都必须创建新的处理程序实例，因为它具有成员变量等非共享状态。
+     * 如果没有添加这个注解, 可以理解为spring的原型, 添加了就是单例.
      * <p>
      * This annotation is provided for documentation purpose, just like
      * <a href="http://www.javaconcurrencyinpractice.com/annotations/doc/">the JCIP annotations</a>.

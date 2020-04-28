@@ -21,6 +21,7 @@ import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.AttributeKey;
 import io.netty.util.concurrent.EventExecutor;
 import io.netty.util.concurrent.GlobalEventExecutor;
+import io.netty.util.concurrent.SingleThreadEventExecutor;
 import io.netty.util.internal.ObjectUtil;
 import io.netty.util.internal.SocketUtils;
 import io.netty.util.internal.StringUtil;
@@ -378,10 +379,18 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
 
         // This method is invoked before channelRegistered() is triggered.  Give user handlers a chance to set up
         // the pipeline in its channelRegistered() implementation.
+        // 在触发channelRegistered()之前调用此方法。让用户处理器有机会在其channelRegistered()实现中设置管道。
+        /**
+         * 这些线程最终被事件轮询线程同步调用, 这里只是将任务加入任务队列, 不是立马执行
+         * @see SingleThreadEventExecutor#execute(java.lang.Runnable)
+         */
         channel.eventLoop().execute(new Runnable() {
             @Override
             public void run() {
                 if (regFuture.isSuccess()) {
+                    /**
+                     * @see AbstractChannel#bind(java.net.SocketAddress, io.netty.channel.ChannelPromise)
+                     */
                     channel.bind(localAddress, promise).addListener(ChannelFutureListener.CLOSE_ON_FAILURE);
                 } else {
                     promise.setFailure(regFuture.cause());

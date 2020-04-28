@@ -21,6 +21,13 @@ final class DefaultChannelHandlerContext extends AbstractChannelHandlerContext {
 
     private final ChannelHandler handler;
 
+    /**
+     * 
+     * @param pipeline DefaultChannelPipeline
+     * @param executor null
+     * @param name 如果没指定会根据handler生成一个
+     * @param handler new ChannelInitializer<Channel>()
+     */
     DefaultChannelHandlerContext(
             DefaultChannelPipeline pipeline, EventExecutor executor, String name, ChannelHandler handler) {
         super(pipeline, executor, name, handler.getClass());

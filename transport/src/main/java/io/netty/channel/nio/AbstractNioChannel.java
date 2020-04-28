@@ -393,8 +393,8 @@ public abstract class AbstractNioChannel extends AbstractChannel {
                  * javaChannel(): ServerSocketChannel 通过反射创建出来nio底层channel
                  * 调用nio底层将ServerSocketChannel注册到selector上
                  *
-                 * 0:表示对任何时间都不感兴趣, 后续可以通过: selectionKey.interestOps(SelectionKey.OP_ACCEPT); 改变
-                 * 附加对象: this: AbstractNioChannel
+                 * 0: 表示对任何事件都不感兴趣, 后续可以通过: selectionKey.interestOps(SelectionKey.OP_ACCEPT); 改变
+                 * 附加对象: this: AbstractNioChannel, 为了让客户端来连接时,能直接拿到ServerSocketChannel对象
                  */
                 selectionKey = javaChannel().register(eventLoop().unwrappedSelector(), 0, this);
                 return;

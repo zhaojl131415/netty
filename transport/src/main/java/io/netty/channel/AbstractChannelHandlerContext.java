@@ -101,6 +101,13 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
 
     private volatile int handlerState = INIT;
 
+    /**
+     *
+     * @param pipeline DefaultChannelPipeline
+     * @param executor null
+     * @param name 如果没指定会根据handler生成一个
+     * @param handlerClass new ChannelInitializer<Channel>().getClass()
+     */
     AbstractChannelHandlerContext(DefaultChannelPipeline pipeline, EventExecutor executor,
                                   String name, Class<? extends ChannelHandler> handlerClass) {
         this.name = ObjectUtil.checkNotNull(name, "name");
@@ -126,6 +133,10 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         return channel().config().getAllocator();
     }
 
+    /**
+     * 若executor为空, 获取NioEventLoop
+     * @return
+     */
     @Override
     public EventExecutor executor() {
         if (executor == null) {
@@ -485,6 +496,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
             return promise;
         }
 
+        // 找出栈处理器
         final AbstractChannelHandlerContext next = findContextOutbound(MASK_BIND);
         EventExecutor executor = next.executor();
         if (executor.inEventLoop()) {
@@ -503,6 +515,9 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
     private void invokeBind(SocketAddress localAddress, ChannelPromise promise) {
         if (invokeHandler()) {
             try {
+                /**
+                 * @see DefaultChannelPipeline.HeadContext#bind(io.netty.channel.ChannelHandlerContext, java.net.SocketAddress, io.netty.channel.ChannelPromise)
+                 */
                 ((ChannelOutboundHandler) handler()).bind(this, localAddress, promise);
             } catch (Throwable t) {
                 notifyOutboundHandlerException(t, promise);
@@ -915,6 +930,11 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         return ctx;
     }
 
+    /**
+     * 查找出栈处理器, 从尾节点开始往前找
+     * @param mask
+     * @return
+     */
     private AbstractChannelHandlerContext findContextOutbound(int mask) {
         AbstractChannelHandlerContext ctx = this;
         EventExecutor currentExecutor = executor();
@@ -969,6 +989,9 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         // any pipeline events ctx.handler() will miss them because the state will not allow it.
         // 在调用handlerAdded之前，我们必须调用setAddComplete。否则，如果handlerAdded方法生成任何管道事件，ctx.handler()将错过这些事件，因为状态不允许它发生。
         if (setAddComplete()) {
+            /**
+             * @see ChannelInitializer#handlerAdded(io.netty.channel.ChannelHandlerContext)
+             */
             handler().handlerAdded(this);
         }
     }

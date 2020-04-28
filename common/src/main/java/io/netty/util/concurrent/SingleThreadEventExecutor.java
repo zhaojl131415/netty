@@ -480,7 +480,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
      */
     protected boolean runAllTasks(long timeoutNanos) {
         fetchFromScheduledTaskQueue();
-        // 获取任务: 之前的register0(promise)的任务在这就能获取到
+        // 从taskQueue中获取任务: 之前的register0(promise)的任务在这就能获取到
         Runnable task = pollTask();
         if (task == null) {
             // 如果没取到任务，尝试再获取一次，如果有就执行
@@ -851,7 +851,9 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
 
     /**
      *
-     * @param task 执行register0(promise)方法
+     * @param task 任务, 包括以下:
+     * 1 执行register0(promise)方法
+     * 2 pipeline.addLast()
      */
     @Override
     public void execute(Runnable task) {
@@ -866,7 +868,9 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
 
     /**
      *
-     * @param task 执行register0(promise)方法
+     * @param task 任务, 包括以下:
+     * 1 执行register0(promise)方法
+     * 2 pipeline.addLast()
      * @param immediate
      */
     private void execute(Runnable task, boolean immediate) {
@@ -1041,7 +1045,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
             public void run() {
                 /**
                  * 缓存当前线程
-                 * 再通过{@link SingleThreadEventExecutor#inEventLoop(java.lang.Thread)}判断是否当前线程, 会返回true, 就不会创建线程了
+                 * 后续再通过{@link SingleThreadEventExecutor#inEventLoop(java.lang.Thread)}判断是否当前线程, 会返回true, 就不会创建线程了
                  */
                 thread = Thread.currentThread();
                 if (interrupted) {

@@ -83,6 +83,7 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
 
     /**
      * Return the {@link EventLoop} this {@link Channel} was registered to.
+     * 返回此通道已注册的EventLoop。
      */
     EventLoop eventLoop();
 

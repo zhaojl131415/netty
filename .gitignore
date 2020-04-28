@@ -46,3 +46,4 @@ mainframer
 # exclude vscode files
 .vscode/
 *.factorypath
+workspace

@@ -15,6 +15,7 @@
  */
 package io.netty.channel;
 
+import io.netty.channel.nio.NioEventLoop;
 import io.netty.util.IntSupplier;
 
 /**
@@ -25,8 +26,18 @@ final class DefaultSelectStrategy implements SelectStrategy {
 
     private DefaultSelectStrategy() { }
 
+    /**
+     * 如果有任务, 先执行selector.selectNow(), 没有任务返回-1
+     * @param selectSupplier The supplier with the result of a select result.
+     * @param hasTasks true if tasks are waiting to be processed.
+     * @return
+     * @throws Exception
+     */
     @Override
     public int calculateStrategy(IntSupplier selectSupplier, boolean hasTasks) throws Exception {
+        /**
+         * selectSupplier.get(): {@link NioEventLoop#selectNowSupplier}
+         */
         return hasTasks ? selectSupplier.get() : SelectStrategy.SELECT;
     }
 }

@@ -17,6 +17,7 @@ package io.netty.bootstrap;
 
 import io.netty.channel.*;
 import io.netty.util.AttributeKey;
+import io.netty.util.concurrent.SingleThreadEventExecutor;
 import io.netty.util.internal.ObjectUtil;
 import io.netty.util.internal.logging.InternalLogger;
 import io.netty.util.internal.logging.InternalLoggerFactory;
@@ -156,14 +157,25 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
          * {@link DefaultChannelPipeline#addLast(io.netty.util.concurrent.EventExecutorGroup, io.netty.channel.ChannelHandler...) }
          */
         p.addLast(new ChannelInitializer<Channel>() {
+            /**
+             * 当前方法会在{@link ChannelInitializer#initChannel(io.netty.channel.ChannelHandlerContext)}中被调用
+             * @param ch            the {@link Channel} which was registered.
+             */
             @Override
             public void initChannel(final Channel ch) {
                 final ChannelPipeline pipeline = ch.pipeline();
+                /**
+                 * 这里获取的handler其实就是 启动类上{@link com.zhao.NettyServer#main(java.lang.String[])}中.handler()配置的服务端处理器
+                 */
                 ChannelHandler handler = config.handler();
                 if (handler != null) {
+                    // 将配置的处理器添加到pipeline中
                     pipeline.addLast(handler);
                 }
 
+                /**
+                 * @see SingleThreadEventExecutor#execute(java.lang.Runnable)
+                 */
                 ch.eventLoop().execute(new Runnable() {
                     @Override
                     public void run() {

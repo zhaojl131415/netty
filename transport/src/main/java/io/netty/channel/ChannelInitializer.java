@@ -109,6 +109,10 @@ public abstract class ChannelInitializer<C extends Channel> extends ChannelInbou
             // The good thing about calling initChannel(...) in handlerAdded(...) is that there will be no ordering
             // surprises if a ChannelInitializer will add another ChannelInitializer. This is as all handlers
             // will be added in the expected order.
+            // 对于我们当前的DefaultChannelPipeline实现，这应该总是正确的。
+            // 在handlerAdded(…)中调用initChannel(…)的好处是，如果一个ChannelInitializer将添加另一个ChannelInitializer，
+            // 则不会出现排序意外。这是因为所有的处理程序都将按照预期的顺序添加。
+
             if (initChannel(ctx)) {
 
                 // We are done with init the Channel, removing the initializer now.
@@ -126,14 +130,26 @@ public abstract class ChannelInitializer<C extends Channel> extends ChannelInbou
     private boolean initChannel(ChannelHandlerContext ctx) throws Exception {
         if (initMap.add(ctx)) { // Guard against re-entrance.
             try {
+                /**
+                 * 通过匿名内部类实现当前抽象类(ChannelInitializer)中重写的initChannel()会在这里被调用
+                 * {@link ServerBootstrap#init(io.netty.channel.Channel)}中的 p.addLast()方法中 重写的 ChannelInitializer#initChannel(io.netty.channel.Channel)就会在这里被调用
+                 */
                 initChannel((C) ctx.channel());
             } catch (Throwable cause) {
                 // Explicitly call exceptionCaught(...) as we removed the handler before calling initChannel(...).
                 // We do so to prevent multiple calls to initChannel(...).
                 exceptionCaught(ctx, cause);
             } finally {
+                // 从Pipeline中删除ChannelInitializer节点
                 ChannelPipeline pipeline = ctx.pipeline();
+                /**
+                 * this: ChannelInitializer
+                 * @see DefaultChannelPipeline#context(io.netty.channel.ChannelHandler)
+                 */
                 if (pipeline.context(this) != null) {
+                    /**
+                     * @see DefaultChannelPipeline#remove(io.netty.channel.ChannelHandler)
+                     */
                     pipeline.remove(this);
                 }
             }
