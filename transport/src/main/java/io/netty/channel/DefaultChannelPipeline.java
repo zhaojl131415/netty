@@ -959,7 +959,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
     @Override
     public final ChannelPipeline fireChannelActive() {
-        // 从头节点向下寻找入栈处理器
+        // 从头节点向下遍历, 执行pipeline中所有入栈处理器的ChannelActive方法
         AbstractChannelHandlerContext.invokeChannelActive(head);
         return this;
     }
@@ -982,6 +982,11 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         return this;
     }
 
+    /**
+     * 新连接接入时, msg 为 NioSocketChannel 对象
+     * @param msg
+     * @return
+     */
     @Override
     public final ChannelPipeline fireChannelRead(Object msg) {
         AbstractChannelHandlerContext.invokeChannelRead(head, msg);
@@ -1504,6 +1509,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
+            /**
+             * @see AbstractChannelHandlerContext#fireChannelRead(java.lang.Object)
+             */
             ctx.fireChannelRead(msg);
         }
 

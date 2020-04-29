@@ -61,6 +61,9 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
      *
      * @param parent            the parent {@link Channel} by which this instance was created. May be {@code null}
      * @param ch                the underlying {@link SelectableChannel} on which it operates
+     *
+     * @param parent    NioServerSocketChannel  服务端channel
+     * @param ch    SocketChannel   客户端channel
      */
     protected AbstractNioByteChannel(Channel parent, SelectableChannel ch) {
         super(parent, ch, SelectionKey.OP_READ);

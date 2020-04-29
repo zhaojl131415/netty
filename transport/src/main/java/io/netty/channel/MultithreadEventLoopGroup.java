@@ -93,7 +93,7 @@ public abstract class MultithreadEventLoopGroup extends MultithreadEventExecutor
 
     /**
      *
-     * @param channel NioServerSocketChannel
+     * @param channel 服务端: NioServerSocketChannel 客户端: NioSocketChannel
      * @return
      */
     @Override

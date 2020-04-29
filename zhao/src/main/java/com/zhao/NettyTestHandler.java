@@ -15,6 +15,13 @@ import io.netty.util.CharsetUtil;
  * 可以理解为spring中的单例, 如果没加, 就是原型的, 每次都会新建一个
  *
  * 可以的话尽量使用单例, 节约空间, 但是如果处理器中包含全局的成员变量, 最好不要使用单例
+ *
+ *
+ * 自定义处理器重写的几个方法的调用顺序:
+ * 1 handlerAdded: 在当前处理器被加入到pipeline中时调用, 也有一些特殊情况不会立马调用
+ * 2 channelRegistered
+ * 3 channelActive
+ * 4 channelRead
  */
 @ChannelHandler.Sharable
 public class NettyTestHandler extends ChannelInboundHandlerAdapter{
@@ -23,6 +30,7 @@ public class NettyTestHandler extends ChannelInboundHandlerAdapter{
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         System.out.println("channelActive-----"+ctx);
+        ctx.fireChannelActive();
     }
 
     //读取数据事件
@@ -36,6 +44,7 @@ public class NettyTestHandler extends ChannelInboundHandlerAdapter{
         ByteBuf byteBuf= (ByteBuf) msg;
         System.out.println("channelRead:"+byteBuf.toString(CharsetUtil.UTF_8));
     }
+
 
     @Override
     public void handlerAdded(ChannelHandlerContext ctx) throws Exception {

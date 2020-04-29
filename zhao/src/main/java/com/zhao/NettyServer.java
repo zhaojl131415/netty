@@ -35,10 +35,12 @@ public class NettyServer {
                 .option(ChannelOption.SO_BACKLOG, 128)
                 //保持活动连接状态
                 .childOption(ChannelOption.SO_KEEPALIVE, true)
-                // 服务端处理器：表示服务器启动过程中，pipeline需要经过哪些流程，这里NettyTestHandler最终的顶层接口为ChannelHandler，
+                // 服务端处理器：netty底层有一套完整的pipeline, 可以不用自定义
+                // 表示服务器启动过程中，pipeline需要经过哪些流程，这里NettyTestHandler最终的顶层接口为ChannelHandler，
                 // 是netty的一大核心概念，表示数据流经过的处理器
                 .handler(new NettyTestHandler())
-                // 客户端处理器：表示一条新的连接进来之后，pipeline需要经过哪些流程，也就是上面所说的，老板如何给工人配活
+                // 客户端处理器：netty底层pipeline中只有头尾节点, 需要自定义处理器
+                // 表示一条新的连接进来之后，pipeline需要经过哪些流程，也就是上面所说的，老板如何给工人配活
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     @Override
                     protected void initChannel(NioSocketChannel nioSocketChannel) throws Exception {

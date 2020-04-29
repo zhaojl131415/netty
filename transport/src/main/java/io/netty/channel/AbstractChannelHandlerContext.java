@@ -15,6 +15,7 @@
  */
 package io.netty.channel;
 
+import io.netty.bootstrap.ServerBootstrap;
 import io.netty.buffer.ByteBufAllocator;
 import io.netty.util.Attribute;
 import io.netty.util.AttributeKey;
@@ -227,7 +228,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
     }
 
     /**
-     * 递归调用，从头节点向下寻找入栈处理器
+     * 递归调用，从头节点向下遍历, 执行pipeline中所有入栈处理器的ChannelActive方法
      * @param next
      */
     static void invokeChannelActive(final AbstractChannelHandlerContext next) {
@@ -254,8 +255,12 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
                  *  handler()
                  * @see DefaultChannelPipeline.HeadContext#handler() 第一次调用为头节点，hander返回this
                  *
+                 *
                  * channelActive(this)
+                 * 递归调用, 从头节点往下遍历入栈处理器, 之后是自定义的入栈处理器, 最后是出栈处理器
                  * @see DefaultChannelPipeline.HeadContext#channelActive(io.netty.channel.ChannelHandlerContext)
+                 * @see com.zhao.NettyTestHandler#channelActive(io.netty.channel.ChannelHandlerContext)
+                 * @see ChannelInboundHandlerAdapter#channelActive(io.netty.channel.ChannelHandlerContext)
                  */
                 ((ChannelInboundHandler) handler()).channelActive(this);
             } catch (Throwable t) {
@@ -382,12 +387,22 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         }
     }
 
+    /**
+     * 从头节点开始传播, head, 递归寻找入栈处理器向下传播
+     * @param msg
+     * @return
+     */
     @Override
     public ChannelHandlerContext fireChannelRead(final Object msg) {
         invokeChannelRead(findContextInbound(MASK_CHANNEL_READ), msg);
         return this;
     }
 
+    /**
+     * 新连接接入时, msg 为 NioSocketChannel 对象
+     * @param next 从头节点开始传播, head, 递归寻找入栈处理器向下传播
+     * @param msg
+     */
     static void invokeChannelRead(final AbstractChannelHandlerContext next, Object msg) {
         final Object m = next.pipeline.touch(ObjectUtil.checkNotNull(msg, "msg"), next);
         EventExecutor executor = next.executor();
@@ -406,6 +421,17 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
     private void invokeChannelRead(Object msg) {
         if (invokeHandler()) {
             try {
+                /**
+                 * handler() 从头节点开始递归向下传播
+                 * @see DefaultChannelPipeline.HeadContext#handler()
+                 *
+                 * channelRead(this, msg)
+                 * 递归调用, 从头节点往下遍历入栈处理器
+                 * @see DefaultChannelPipeline.HeadContext#channelRead(io.netty.channel.ChannelHandlerContext, java.lang.Object)
+                 * @see com.zhao.NettyTestHandler#channelRead(io.netty.channel.ChannelHandlerContext, java.lang.Object)
+                 * @see ServerBootstrap.ServerBootstrapAcceptor#channelRead(io.netty.channel.ChannelHandlerContext, java.lang.Object)
+                 *
+                 */
                 ((ChannelInboundHandler) handler()).channelRead(this, msg);
             } catch (Throwable t) {
                 notifyHandlerException(t);

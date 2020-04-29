@@ -16,11 +16,13 @@
 package io.netty.channel;
 
 import io.netty.buffer.ByteBufAllocator;
+import io.netty.channel.nio.AbstractNioByteChannel;
 import io.netty.channel.nio.AbstractNioChannel;
 import io.netty.channel.nio.AbstractNioMessageChannel;
 import io.netty.channel.socket.ChannelOutputShutdownEvent;
 import io.netty.channel.socket.ChannelOutputShutdownException;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.DefaultAttributeMap;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.concurrent.SingleThreadEventExecutor;
@@ -50,6 +52,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
     private final Channel parent;
     private final ChannelId id;
+    // new NioMessageUnsafe()
     private final Unsafe unsafe;
     private final DefaultChannelPipeline pipeline;
     private final VoidChannelPromise unsafeVoidPromise = new VoidChannelPromise(this, false);
@@ -69,9 +72,14 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
     /**
      * Creates a new instance.
      *
-     * @param parent null 此通道的父通道。如果没有父元素，则为{@code null}。
+     * @param parent 此通道的父通道。如果没有父元素，则为{@code null}。
      *        the parent of this channel. {@code null} if there's no parent.
      *
+     * 服务端
+     * @param parent null
+     *
+     * 客户端
+     * @param parent NioServerSocketChannel  服务端channel
      *
      * Channel和Pipeline之间是互通的
      *                          ┌----> head
@@ -84,8 +92,14 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
         id = newId();
         /**
          * 读写数据基础类
+         *
+         * 服务端
          * @see AbstractNioMessageChannel#newUnsafe()
          * unsafe = new NioMessageUnsafe()
+         *
+         * 客户端
+         * @see AbstractNioByteChannel#newUnsafe()
+         * unsafe = new NioByteUnsafe()
          */
         unsafe = newUnsafe();
         /**
@@ -545,18 +559,29 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 // Ensure we call handlerAdded(...) before we actually notify the promise. This is needed as the
                 // user may already fire events through the pipeline in the ChannelFutureListener.
                 // 确保在我们实际通知承诺之前调用handlerAdded(…)。这是必需的，因为用户可能已经通过ChannelFutureListener中的管道触发了事件。
+                /**
+                 * 执行handlerAdded, 将handler添加到pipeline
+                 */
                 pipeline.invokeHandlerAddedIfNeeded();
 
                 safeSetSuccess(promise);
+                // pipeline中从头节点开始向下传递执行ChannelRegistered方法:
                 pipeline.fireChannelRegistered();
                 // Only fire a channelActive if the channel has never been registered. This prevents firing
                 // multiple channel actives if the channel is deregistered and re-registered.
+                // 只有在频道未被注册的情况下才激活该频道。这可以防止在取消注册和重新注册通道时触发多个通道活动。
+                /**
+                 * @see NioServerSocketChannel#isActive() 服务端
+                 * @see NioSocketChannel#isActive() 客户端
+                 */
                 if (isActive()) {
                     if (firstRegistration) {
+                        // pipeline中从头节点开始向下传递执行ChannelActive方法
                         pipeline.fireChannelActive();
                     } else if (config().isAutoRead()) {
                         // This channel was registered before and autoRead() is set. This means we need to begin read
                         // again so that we process inbound data.
+                        // 这个通道之前已经注册，并且设置了autoRead()。这意味着我们需要再次开始读取，以便处理入站数据。
                         //
                         // See https://github.com/netty/netty/issues/4805
                         beginRead();

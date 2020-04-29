@@ -293,6 +293,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         }
     }
 
+    // 将到期的定时任务转移到taskQueue中
     private boolean fetchFromScheduledTaskQueue() {
         if (scheduledTaskQueue == null || scheduledTaskQueue.isEmpty()) {
             return true;
@@ -479,6 +480,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
      * the tasks in the task queue and returns if it ran longer than {@code timeoutNanos}.
      */
     protected boolean runAllTasks(long timeoutNanos) {
+        // 将到期的定时任务转移到taskQueue中
         fetchFromScheduledTaskQueue();
         // 从taskQueue中获取任务: 之前的register0(promise)的任务在这就能获取到
         Runnable task = pollTask();

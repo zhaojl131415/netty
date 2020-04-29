@@ -60,8 +60,12 @@ public class ChannelInboundHandlerAdapter extends ChannelHandlerAdapter implemen
     /**
      * Calls {@link ChannelHandlerContext#fireChannelActive()} to forward
      * to the next {@link ChannelInboundHandler} in the {@link ChannelPipeline}.
+     * 调用{@link ChannelHandlerContext#fireChannelActive()}来转发到在{@link ChannelPipeline}中的下一个{@link ChannelInboundHandler}。
      *
      * Sub-classes may override this method to change behavior.
+     * 子类可以覆盖此方法来更改行为。
+     *
+     * 但是这里调用了@Skip注解, 会跳过这一步往后执行
      */
     @Skip
     @Override

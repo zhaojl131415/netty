@@ -112,7 +112,9 @@ public abstract class ChannelInitializer<C extends Channel> extends ChannelInbou
             // 对于我们当前的DefaultChannelPipeline实现，这应该总是正确的。
             // 在handlerAdded(…)中调用initChannel(…)的好处是，如果一个ChannelInitializer将添加另一个ChannelInitializer，
             // 则不会出现排序意外。这是因为所有的处理程序都将按照预期的顺序添加。
-
+            /**
+             * 执行自定义的handler的initChannel()方法, 往pipeline添加
+             */
             if (initChannel(ctx)) {
 
                 // We are done with init the Channel, removing the initializer now.
@@ -131,6 +133,7 @@ public abstract class ChannelInitializer<C extends Channel> extends ChannelInbou
         if (initMap.add(ctx)) { // Guard against re-entrance.
             try {
                 /**
+                 * 自定义ChannelInitializer:
                  * 通过匿名内部类实现当前抽象类(ChannelInitializer)中重写的initChannel()会在这里被调用
                  * {@link ServerBootstrap#init(io.netty.channel.Channel)}中的 p.addLast()方法中 重写的 ChannelInitializer#initChannel(io.netty.channel.Channel)就会在这里被调用
                  */

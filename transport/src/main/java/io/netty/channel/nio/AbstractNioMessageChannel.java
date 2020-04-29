@@ -15,12 +15,8 @@
  */
 package io.netty.channel.nio;
 
-import io.netty.channel.Channel;
-import io.netty.channel.ChannelConfig;
-import io.netty.channel.ChannelOutboundBuffer;
-import io.netty.channel.ChannelPipeline;
-import io.netty.channel.RecvByteBufAllocator;
-import io.netty.channel.ServerChannel;
+import io.netty.channel.*;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
 
 import java.io.IOException;
 import java.net.PortUnreachableException;
@@ -76,6 +72,10 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
             try {
                 try {
                     do {
+                        /**
+                         * 接受客户端连接 NioSocketChannel 并存入readBuf
+                         * @see NioServerSocketChannel#doReadMessages(java.util.List)
+                         */
                         int localRead = doReadMessages(readBuf);
                         if (localRead == 0) {
                             break;
@@ -91,9 +91,14 @@ public abstract class AbstractNioMessageChannel extends AbstractNioChannel {
                     exception = t;
                 }
 
+                // 遍历list
                 int size = readBuf.size();
                 for (int i = 0; i < size; i ++) {
                     readPending = false;
+                    /**
+                     * readBuf.get(i) 其实就是 NioSocketChannel 对象
+                     * @see DefaultChannelPipeline#fireChannelRead(java.lang.Object)
+                     */
                     pipeline.fireChannelRead(readBuf.get(i));
                 }
                 readBuf.clear();

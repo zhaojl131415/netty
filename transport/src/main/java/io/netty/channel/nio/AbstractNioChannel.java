@@ -28,6 +28,7 @@ import io.netty.channel.ChannelPromise;
 import io.netty.channel.ConnectTimeoutException;
 import io.netty.channel.EventLoop;
 import io.netty.channel.socket.nio.NioServerSocketChannel;
+import io.netty.channel.socket.nio.NioSocketChannel;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.ReferenceCounted;
 import io.netty.util.internal.logging.InternalLogger;
@@ -53,9 +54,14 @@ public abstract class AbstractNioChannel extends AbstractChannel {
 
     private final SelectableChannel ch;
     /**
+     * 服务端
      * NioServerSocketChannel 构造方法中赋值 SelectionKey.OP_ACCEPT
      * @see NioServerSocketChannel#NioServerSocketChannel(java.nio.channels.ServerSocketChannel)
      *
+     * 客户端:
+     * NioSocketChannel构造方法调用了父类AbstractNioByteChannel的构造方法, 而在AbstractNioByteChannel的构造方法中赋值了 SelectionKey.OP_READ
+     * @see NioSocketChannel#NioSocketChannel(io.netty.channel.Channel, java.nio.channels.SocketChannel)
+     * @see AbstractNioByteChannel#AbstractNioByteChannel(io.netty.channel.Channel, java.nio.channels.SelectableChannel)
      */
     protected final int readInterestOp;
     volatile SelectionKey selectionKey;
@@ -82,14 +88,21 @@ public abstract class AbstractNioChannel extends AbstractChannel {
      * @param ch                the underlying {@link SelectableChannel} on which it operates
      * @param readInterestOp    the ops to set to receive data from the {@link SelectableChannel}
      *
+     * 服务端
      * @param parent null
-     * @param ch NioServerSocketChannel
-     * @param readInterestOp SelectionKey.OP_ACCEPT
+     * @param ch NioServerSocketChannel 服务端channel
+     * @param readInterestOp 事件:SelectionKey.OP_ACCEPT
+     *
+     * 客户端
+     * @param parent    NioServerSocketChannel  服务端channel
+     * @param ch    SocketChannel   客户端channel
+     * @param readInterestOp 事件:SelectionKey.OP_READ
      */
     protected AbstractNioChannel(Channel parent, SelectableChannel ch, int readInterestOp) {
         // 创建id、unsafe、pipeline
         super(parent);
         this.ch = ch;
+        // 服务端:SelectionKey.OP_ACCEPT  客户端:SelectionKey.OP_READ
         this.readInterestOp = readInterestOp;
         try {
             // 设置通道非阻塞 相当于nio原生的：ssc.configureBlocking(false);
@@ -116,6 +129,9 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         return (NioUnsafe) super.unsafe();
     }
 
+    /**
+     * @return 服务端: NioServerSocketChannel, 客户端 NioSocketChannel
+     */
     protected SelectableChannel javaChannel() {
         return ch;
     }
@@ -396,11 +412,14 @@ public abstract class AbstractNioChannel extends AbstractChannel {
                 /**
                  * 类似于nio代码: serverSocketChannel.register(selector, SelectionKey.OP_ACCEPT, att);
                  *
-                 * javaChannel(): ServerSocketChannel 通过反射创建出来nio底层channel
+                 * javaChannel(): 服务端: NioServerSocketChannel, 客户端 NioSocketChannel
+                 * 通过反射创建出来nio底层channel
+                 *
                  * 调用nio底层将ServerSocketChannel注册到selector上
                  *
                  * 0: 表示对任何事件都不感兴趣, 后续可以通过: selectionKey.interestOps(SelectionKey.OP_ACCEPT); 改变
-                 * 附加对象: this: AbstractNioChannel, 为了让客户端来连接时,能直接拿到ServerSocketChannel对象
+                 * 附加对象: this: AbstractNioChannel, 为了让客户端来连接时, 能直接拿到ServerSocketChannel对象
+                 * this: 服务端: NioServerSocketChannel, 客户端 NioSocketChannel,
                  */
                 selectionKey = javaChannel().register(eventLoop().unwrappedSelector(), 0, this);
                 return;
@@ -425,7 +444,10 @@ public abstract class AbstractNioChannel extends AbstractChannel {
     }
 
     /**
-     * selectionKey绑定SelectionKey.OP_ACCEPT事件
+     * selectionKey绑定事件
+     * 服务端绑定:SelectionKey.OP_ACCEPT
+     * 客户端绑定:SelectionKey.OP_READ
+     *
      * @throws Exception
      */
     @Override
@@ -442,11 +464,12 @@ public abstract class AbstractNioChannel extends AbstractChannel {
 
         readPending = true;
 
-
         final int interestOps = selectionKey.interestOps();
         /**
          * interestOps：注册时赋值为0，表示对任何事件都不敢兴趣
-         * readInterestOp：NioServerSocketChannel 构造方法中赋值 SelectionKey.OP_ACCEPT
+         * readInterestOp：
+         * 服务端: NioServerSocketChannel 构造方法中赋值 SelectionKey.OP_ACCEPT
+         * 客户端: NioSocketChannel 构造方法中赋值 SelectionKey.OP_READ
          *
          * interestOps & readInterestOp即与运算为：0 & 16 = 0
          */

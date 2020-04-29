@@ -45,7 +45,7 @@ public class DefaultChannelPromise extends DefaultPromise<Void> implements Chann
     /**
      * Creates a new instance.
      *
-     * @param channel NioServerSocketChannel
+     * @param channel 服务端: NioServerSocketChannel 客户端: NioSocketChannel
      *        the {@link Channel} associated with this future
      * @param executor  NioEventLoop
      */

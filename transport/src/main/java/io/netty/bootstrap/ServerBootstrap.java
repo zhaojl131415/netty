@@ -42,7 +42,11 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
     private final Map<AttributeKey<?>, Object> childAttrs = new ConcurrentHashMap<AttributeKey<?>, Object>();
     private final ServerBootstrapConfig config = new ServerBootstrapConfig(this);
 
+    // workerGroup
     private volatile EventLoopGroup childGroup;
+    /**
+     * 自定义的ChannelInitializer
+     */
     private volatile ChannelHandler childHandler;
 
     public ServerBootstrap() { }
@@ -118,6 +122,8 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
 
     /**
      * Set the {@link ChannelHandler} which is used to serve the request for the {@link Channel}'s.
+     *
+     * 在NettyServer中配置ServerBootstrap时, 通过调用serverBootstrap.childHandler()方法指定了, 自定义实现
      */
     public ServerBootstrap childHandler(ChannelHandler childHandler) {
         this.childHandler = ObjectUtil.checkNotNull(childHandler, "childHandler");
@@ -143,6 +149,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
 
         // workerGroup
         final EventLoopGroup currentChildGroup = childGroup;
+        // 自定义的ChannelInitializer
         final ChannelHandler currentChildHandler = childHandler;
         final Entry<ChannelOption<?>, Object>[] currentChildOptions;
         synchronized (childOptions) {
@@ -203,11 +210,25 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
     private static class ServerBootstrapAcceptor extends ChannelInboundHandlerAdapter {
 
         private final EventLoopGroup childGroup;
+        /**
+         * 赋值是在netty服务端绑定端口初始化时赋值的
+         * @see ServerBootstrap#init(io.netty.channel.Channel)
+         *
+         * 值为 自定义的ChannelInitializer
+         */
         private final ChannelHandler childHandler;
         private final Entry<ChannelOption<?>, Object>[] childOptions;
         private final Entry<AttributeKey<?>, Object>[] childAttrs;
         private final Runnable enableAutoReadTask;
 
+        /**
+         *
+         * @param channel       NioServerSocketChannel
+         * @param childGroup    workerGroup
+         * @param childHandler  自定义的ChannelInitializer
+         * @param childOptions
+         * @param childAttrs
+         */
         ServerBootstrapAcceptor(
                 final Channel channel, EventLoopGroup childGroup, ChannelHandler childHandler,
                 Entry<ChannelOption<?>, Object>[] childOptions, Entry<AttributeKey<?>, Object>[] childAttrs) {
@@ -229,17 +250,27 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
             };
         }
 
+        /**
+         *
+         * @param ctx
+         * @param msg NioSocketChannel
+         */
         @Override
         @SuppressWarnings("unchecked")
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
+            //
             final Channel child = (Channel) msg;
-
+            // 往客户端的Channel中添加pipeline, 自定义的ChannelInitializer
             child.pipeline().addLast(childHandler);
 
             setChannelOptions(child, childOptions, logger);
             setAttributes(child, childAttrs);
 
             try {
+                // 工作线程注册 NioSocketChannel
+                /**
+                 * @see MultithreadEventLoopGroup#register(io.netty.channel.Channel)
+                 */
                 childGroup.register(child).addListener(new ChannelFutureListener() {
                     @Override
                     public void operationComplete(ChannelFuture future) throws Exception {
