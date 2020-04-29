@@ -144,7 +144,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
     }
 
     /**
-     * 这里类似于nio原生的:ssc.socket().bind(addr);
+     * 这里类似于调用nio原生的:ssc.socket().bind(addr);
      * @param localAddress
      * @throws Exception
      */
@@ -152,6 +152,9 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
     @Override
     protected void doBind(SocketAddress localAddress) throws Exception {
         // 获取java版本
+        /**
+         * config.getBacklog()：表示服务端还没来得及接收的最大等待数量
+         */
         if (PlatformDependent.javaVersion() >= 7) {
             javaChannel().bind(localAddress, config.getBacklog());
         } else {

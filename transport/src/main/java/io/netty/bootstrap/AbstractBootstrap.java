@@ -381,8 +381,10 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         // the pipeline in its channelRegistered() implementation.
         // 在触发channelRegistered()之前调用此方法。让用户处理器有机会在其channelRegistered()实现中设置管道。
         /**
-         * 这些线程最终被事件轮询线程同步调用, 这里只是将任务加入任务队列, 不是立马执行
+         * 这些线程最终被事件轮询线程同步调用, 这里只是封装成任务加入任务队列, 不是立马执行
+         * channel.eventLoop()  == NioEventLoop
          * @see SingleThreadEventExecutor#execute(java.lang.Runnable)
+         *
          */
         channel.eventLoop().execute(new Runnable() {
             @Override

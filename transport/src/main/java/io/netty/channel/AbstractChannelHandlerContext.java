@@ -215,13 +215,25 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         }
     }
 
+    /**
+     * 递归寻找入栈处理器
+     * @return
+     */
     @Override
     public ChannelHandlerContext fireChannelActive() {
+        // 递归
         invokeChannelActive(findContextInbound(MASK_CHANNEL_ACTIVE));
         return this;
     }
 
+    /**
+     * 递归调用，从头节点向下寻找入栈处理器
+     * @param next
+     */
     static void invokeChannelActive(final AbstractChannelHandlerContext next) {
+        /**
+         * next: 第一次为头节点，向下递归
+         */
         EventExecutor executor = next.executor();
         if (executor.inEventLoop()) {
             next.invokeChannelActive();
@@ -238,6 +250,13 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
     private void invokeChannelActive() {
         if (invokeHandler()) {
             try {
+                /**
+                 *  handler()
+                 * @see DefaultChannelPipeline.HeadContext#handler() 第一次调用为头节点，hander返回this
+                 *
+                 * channelActive(this)
+                 * @see DefaultChannelPipeline.HeadContext#channelActive(io.netty.channel.ChannelHandlerContext)
+                 */
                 ((ChannelInboundHandler) handler()).channelActive(this);
             } catch (Throwable t) {
                 notifyHandlerException(t);
@@ -496,7 +515,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
             return promise;
         }
 
-        // 找出栈处理器
+        // 从尾节点往前找出栈处理器
         final AbstractChannelHandlerContext next = findContextOutbound(MASK_BIND);
         EventExecutor executor = next.executor();
         if (executor.inEventLoop()) {
@@ -680,6 +699,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
 
     @Override
     public ChannelHandlerContext read() {
+        // 从尾节点开始往前找 出栈处理器 读，找到头节点
         final AbstractChannelHandlerContext next = findContextOutbound(MASK_READ);
         EventExecutor executor = next.executor();
         if (executor.inEventLoop()) {
@@ -698,6 +718,9 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
     private void invokeRead() {
         if (invokeHandler()) {
             try {
+                /**
+                 * @see  DefaultChannelPipeline.HeadContext#read(io.netty.channel.ChannelHandlerContext)
+                 */
                 ((ChannelOutboundHandler) handler()).read(this);
             } catch (Throwable t) {
                 notifyHandlerException(t);
@@ -921,6 +944,11 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         return false;
     }
 
+    /**
+     * 顺序找 入栈处理器
+     * @param mask
+     * @return
+     */
     private AbstractChannelHandlerContext findContextInbound(int mask) {
         AbstractChannelHandlerContext ctx = this;
         EventExecutor currentExecutor = executor();
@@ -947,10 +975,11 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
     private static boolean skipContext(
             AbstractChannelHandlerContext ctx, EventExecutor currentExecutor, int mask, int onlyMask) {
         // Ensure we correctly handle MASK_EXCEPTION_CAUGHT which is not included in the MASK_EXCEPTION_CAUGHT
+        // 确保我们正确处理MASK_EXCEPTION_CAUGHT，它没有包含在MASK_EXCEPTION_CAUGHT中
         return (ctx.executionMask & (onlyMask | mask)) == 0 ||
                 // We can only skip if the EventExecutor is the same as otherwise we need to ensure we offload
                 // everything to preserve ordering.
-                //
+                // 我们只能在EventExecutor相同的情况下跳过，否则我们需要确保卸载所有内容以保持顺序。
                 // See https://github.com/netty/netty/issues/10067
                 (ctx.executor() == currentExecutor && (ctx.executionMask & mask) == 0);
     }

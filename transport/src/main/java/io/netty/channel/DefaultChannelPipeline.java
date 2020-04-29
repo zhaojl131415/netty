@@ -959,6 +959,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
     @Override
     public final ChannelPipeline fireChannelActive() {
+        // 从头节点向下寻找入栈处理器
         AbstractChannelHandlerContext.invokeChannelActive(head);
         return this;
     }
@@ -1037,6 +1038,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
     @Override
     public final ChannelFuture bind(SocketAddress localAddress, ChannelPromise promise) {
+        // 从尾节点往前找出栈处理器
         return tail.bind(localAddress, promise);
     }
 
@@ -1068,6 +1070,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
     @Override
     public final ChannelPipeline read() {
+        // 从尾节点开始往前找 出栈处理器 读
         tail.read();
         return this;
     }
@@ -1325,6 +1328,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     // A special catch-all handler that handles both bytes and messages.
     final class TailContext extends AbstractChannelHandlerContext implements ChannelInboundHandler {
 
+        // 头节点中有Unsafe，尾节点没有
         TailContext(DefaultChannelPipeline pipeline) {
             super(pipeline, null, TAIL_NAME, TailContext.class);
             setAddComplete();
@@ -1386,6 +1390,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     final class HeadContext extends AbstractChannelHandlerContext
             implements ChannelOutboundHandler, ChannelInboundHandler {
 
+        // 头节点中有Unsafe，尾节点没有
         private final Unsafe unsafe;
 
         HeadContext(DefaultChannelPipeline pipeline) {
@@ -1443,6 +1448,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
         @Override
         public void read(ChannelHandlerContext ctx) {
+            /**
+             * @see AbstractChannel.AbstractUnsafe#beginRead()
+             */
             unsafe.beginRead();
         }
 
@@ -1479,8 +1487,13 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
         @Override
         public void channelActive(ChannelHandlerContext ctx) {
+            /**
+             * 在netty中“fire”表示向下传播
+             *
+             * @see AbstractChannelHandlerContext#fireChannelActive()
+             */
             ctx.fireChannelActive();
-
+            // 开始读取如果是自动读取
             readIfIsAutoRead();
         }
 
@@ -1500,9 +1513,12 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
             readIfIsAutoRead();
         }
-
+        // 开始读取如果是自动读取
         private void readIfIsAutoRead() {
             if (channel.config().isAutoRead()) {
+                /**
+                 * @see AbstractChannel#read()
+                 */
                 channel.read();
             }
         }

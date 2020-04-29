@@ -112,6 +112,7 @@ public interface Channel extends AttributeMap, ChannelOutboundInvoker, Comparabl
 
     /**
      * Return {@code true} if the {@link Channel} is active and so connected.
+     * 如果{@link通道}是活动的并且是连接的，则返回{@code true}。
      */
     boolean isActive();
 

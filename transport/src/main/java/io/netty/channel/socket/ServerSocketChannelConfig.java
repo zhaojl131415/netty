@@ -50,6 +50,7 @@ public interface ServerSocketChannelConfig extends ChannelConfig {
     /**
      * Gets the backlog value to specify when the channel binds to a local
      * address.
+     * 获取要指定通道何时绑定到本地地址的backlog值。
      */
     int getBacklog();
 

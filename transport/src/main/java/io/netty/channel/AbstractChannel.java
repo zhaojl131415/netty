@@ -594,7 +594,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
             boolean wasActive = isActive();
             try {
                 /**
-                 * 核心
+                 * 核心 绑定ip端口
                  * @see NioServerSocketChannel#doBind(java.net.SocketAddress)
                  */
                 doBind(localAddress);
@@ -604,7 +604,14 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 return;
             }
 
+            // 判断服务端channel是否就绪
             if (!wasActive && isActive()) {
+                /**
+                 * 线程执行调用channelActive方法, 绑定连接OP_ACCEPT事件，开始接收客户端连接
+                 * eventLoop().execute(task); 封装成任务，加入任务队列
+                 * 在这里最终调用绑定SelectionKey.OP_ACCEPT事件
+                 * @see AbstractNioChannel#doBeginRead()
+                 */
                 invokeLater(new Runnable() {
                     @Override
                     public void run() {
@@ -890,6 +897,9 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
             }
 
             try {
+                /**
+                 * @see AbstractNioChannel#doBeginRead()
+                 */
                 doBeginRead();
             } catch (final Exception e) {
                 invokeLater(new Runnable() {

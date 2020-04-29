@@ -27,6 +27,7 @@ import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelPromise;
 import io.netty.channel.ConnectTimeoutException;
 import io.netty.channel.EventLoop;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.util.ReferenceCountUtil;
 import io.netty.util.ReferenceCounted;
 import io.netty.util.internal.logging.InternalLogger;
@@ -51,6 +52,11 @@ public abstract class AbstractNioChannel extends AbstractChannel {
             InternalLoggerFactory.getInstance(AbstractNioChannel.class);
 
     private final SelectableChannel ch;
+    /**
+     * NioServerSocketChannel 构造方法中赋值 SelectionKey.OP_ACCEPT
+     * @see NioServerSocketChannel#NioServerSocketChannel(java.nio.channels.ServerSocketChannel)
+     *
+     */
     protected final int readInterestOp;
     volatile SelectionKey selectionKey;
     boolean readPending;
@@ -418,9 +424,17 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         eventLoop().cancel(selectionKey());
     }
 
+    /**
+     * selectionKey绑定SelectionKey.OP_ACCEPT事件
+     * @throws Exception
+     */
     @Override
     protected void doBeginRead() throws Exception {
         // Channel.read() or ChannelHandlerContext.read() was called
+        /**
+         * selectionKey赋值：
+         * @see AbstractNioChannel#doRegister()
+         */
         final SelectionKey selectionKey = this.selectionKey;
         if (!selectionKey.isValid()) {
             return;
@@ -428,8 +442,16 @@ public abstract class AbstractNioChannel extends AbstractChannel {
 
         readPending = true;
 
+
         final int interestOps = selectionKey.interestOps();
+        /**
+         * interestOps：注册时赋值为0，表示对任何事件都不敢兴趣
+         * readInterestOp：NioServerSocketChannel 构造方法中赋值 SelectionKey.OP_ACCEPT
+         *
+         * interestOps & readInterestOp即与运算为：0 & 16 = 0
+         */
         if ((interestOps & readInterestOp) == 0) {
+            // interestOps | readInterestOp即或运算为：0 | 16 = 16
             selectionKey.interestOps(interestOps | readInterestOp);
         }
     }
