@@ -833,7 +833,8 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                 /**
                  * unsafe --> {@link AbstractChannel#unsafe}
                  *
-                 * @see AbstractNioMessageChannel.NioMessageUnsafe#read()
+                 * @see AbstractNioMessageChannel.NioMessageUnsafe#read() 服务端
+                 * @see AbstractNioByteChannel.NioByteUnsafe#read() 客户端
                  */
                 unsafe.read();
             }
