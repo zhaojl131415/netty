@@ -74,14 +74,15 @@ public final class ChannelOutboundBuffer {
     private final Channel channel;
 
     // Entry(flushedEntry) --> ... Entry(unflushedEntry) --> ... Entry(tailEntry)
+    // 这三者的关系可以理解为 起始下标 -> 已写下标 -> 最大可写下标
     //
-    // The Entry that is the first in the linked-list structure that was flushed
+    // The Entry that is the first in the linked-list structure that was flushed 被刷新的链表结构中的第一个项
     private Entry flushedEntry;
-    // The Entry which is the first unflushed in the linked-list structure
+    // The Entry which is the first unflushed in the linked-list structure 在链表结构中第一个未刷新的项
     private Entry unflushedEntry;
-    // The Entry which represents the tail of the buffer
+    // The Entry which represents the tail of the buffer 表示缓冲区尾部的项
     private Entry tailEntry;
-    // The number of flushed entries that are not written yet
+    // The number of flushed entries that are not written yet 尚未写入的刷新项的数目
     private int flushed;
 
     private int nioBufferCount;
@@ -110,9 +111,12 @@ public final class ChannelOutboundBuffer {
     /**
      * Add given message to this {@link ChannelOutboundBuffer}. The given {@link ChannelPromise} will be notified once
      * the message was written.
+     * 将给定的消息添加到{@link ChannelOutboundBuffer}。一旦消息被写入，给定的{@link ChannelPromise}将被通知。
      */
     public void addMessage(Object msg, int size, ChannelPromise promise) {
+        // 将当前ByteBuf封装为Entry
         Entry entry = Entry.newInstance(msg, size, total(msg), promise);
+        // 第一次进来头尾都为null
         if (tailEntry == null) {
             flushedEntry = null;
         } else {
@@ -132,6 +136,7 @@ public final class ChannelOutboundBuffer {
     /**
      * Add a flush to this {@link ChannelOutboundBuffer}. This means all previous added messages are marked as flushed
      * and so you will be able to handle them.
+     * 向{@link ChannelOutboundBuffer}添加刷新。这意味着以前添加的所有消息都被标记为已刷新，因此您将能够处理它们。
      */
     public void addFlush() {
         // There is no need to process all entries if there was already a flush before and no new messages
@@ -140,10 +145,12 @@ public final class ChannelOutboundBuffer {
         // See https://github.com/netty/netty/issues/2577
         Entry entry = unflushedEntry;
         if (entry != null) {
+            // 移动指针
             if (flushedEntry == null) {
                 // there is no flushedEntry yet, so start with the entry
                 flushedEntry = entry;
             }
+            // 减PendingOutboundBytes大小
             do {
                 flushed ++;
                 if (!entry.promise.setUncancellable()) {
@@ -154,14 +161,14 @@ public final class ChannelOutboundBuffer {
                 entry = entry.next;
             } while (entry != null);
 
-            // All flushed so reset unflushedEntry
+            // All flushed so reset unflushedEntry 所有flushed完成，所以重置unflushedEntry
             unflushedEntry = null;
         }
     }
 
     /**
-     * Increment the pending bytes which will be written at some point.
-     * This method is thread-safe!
+     * Increment the pending bytes which will be written at some point. 增加将在某个点写入的暂挂字节。
+     * This method is thread-safe! 这个方法是线程安全的!
      */
     void incrementPendingOutboundBytes(long size) {
         incrementPendingOutboundBytes(size, true);
@@ -171,9 +178,11 @@ public final class ChannelOutboundBuffer {
         if (size == 0) {
             return;
         }
-
+        // 新写入的buffer大小
         long newWriteBufferSize = TOTAL_PENDING_SIZE_UPDATER.addAndGet(this, size);
+        // channel.config().getWriteBufferHighWaterMark() 64 * 1024 = 64K
         if (newWriteBufferSize > channel.config().getWriteBufferHighWaterMark()) {
+            // 向pipeline传递channelWritabilityChanged事件
             setUnwritable(invokeLater);
         }
     }

@@ -784,6 +784,9 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
 
     private void invokeWrite0(Object msg, ChannelPromise promise) {
         try {
+            /**
+             * @see DefaultChannelPipeline.HeadContext#write(io.netty.channel.ChannelHandlerContext, java.lang.Object, io.netty.channel.ChannelPromise)
+             */
             ((ChannelOutboundHandler) handler()).write(this, msg, promise);
         } catch (Throwable t) {
             notifyOutboundHandlerException(t, promise);
@@ -831,7 +834,9 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
 
     void invokeWriteAndFlush(Object msg, ChannelPromise promise) {
         if (invokeHandler()) {
+            // 先调用每个处理器的write()
             invokeWrite0(msg, promise);
+            // 调用每个处理器的flush()
             invokeFlush0();
         } else {
             writeAndFlush(msg, promise);

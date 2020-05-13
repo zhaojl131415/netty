@@ -17,6 +17,7 @@ package io.netty.channel.socket.nio;
 
 import io.netty.buffer.AbstractByteBuf;
 import io.netty.buffer.ByteBuf;
+import io.netty.buffer.UnpooledDirectByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelException;
 import io.netty.channel.ChannelFuture;
@@ -365,6 +366,11 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
     @Override
     protected int doWriteBytes(ByteBuf buf) throws Exception {
         final int expectedWrittenBytes = buf.readableBytes();
+        // SocketChannel
+        /**
+         * @see UnpooledDirectByteBuf#readBytes(java.nio.channels.GatheringByteChannel, int)
+         * 底层调用 out.write 写出数据
+         */
         return buf.readBytes(javaChannel(), expectedWrittenBytes);
     }
 

@@ -493,18 +493,29 @@ public abstract class AbstractNioChannel extends AbstractChannel {
      * Returns an off-heap copy of the specified {@link ByteBuf}, and releases the original one.
      * Note that this method does not create an off-heap copy if the allocation / deallocation cost is too high,
      * but just returns the original {@link ByteBuf}..
+     * 返回指定的{@link ByteBuf}的堆外副本，并释放原始副本。
+     * 请注意，如果分配/回收位置成本过高，此方法不会创建堆外副本，而只返回原始的{@link ByteBuf}..
      */
     protected final ByteBuf newDirectBuffer(ByteBuf buf) {
+        // 获取ByteBuf的可读字节数
         final int readableBytes = buf.readableBytes();
+        // 如果ByteBuf的可读字节数为0, 表示为空, 直接返回一个空的堆外内存
         if (readableBytes == 0) {
             ReferenceCountUtil.safeRelease(buf);
             return Unpooled.EMPTY_BUFFER;
         }
 
+        // ByteBuf分配器
         final ByteBufAllocator alloc = alloc();
         if (alloc.isDirectBufferPooled()) {
+            /**
+             * 分配一个堆外buffer
+             * @see io.netty.channel.unix.PreferredDirectByteBufAllocator#directBuffer(int)
+             */
             ByteBuf directBuf = alloc.directBuffer(readableBytes);
+            // 将堆内buffer中的数据写到新的堆外buffer
             directBuf.writeBytes(buf, buf.readerIndex(), readableBytes);
+            // 释放堆内buffer
             ReferenceCountUtil.safeRelease(buf);
             return directBuf;
         }

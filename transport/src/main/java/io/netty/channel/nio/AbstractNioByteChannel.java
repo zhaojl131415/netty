@@ -228,6 +228,11 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
                 return 0;
             }
 
+            /**
+             * 将数据写入socket底层
+             *
+             * @see NioSocketChannel#doWriteBytes(io.netty.buffer.ByteBuf)
+             */
             final int localFlushedAmount = doWriteBytes(buf);
             if (localFlushedAmount > 0) {
                 in.progress(localFlushedAmount);
@@ -275,14 +280,22 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
         incompleteWrite(writeSpinCount < 0);
     }
 
+    /**
+     * 把堆内内存转为堆外内存
+     *
+     * @param msg
+     * @return
+     */
     @Override
     protected final Object filterOutboundMessage(Object msg) {
+        // 判断msg是否为 ByteBuf
         if (msg instanceof ByteBuf) {
             ByteBuf buf = (ByteBuf) msg;
+            // 判断ByteBuf是否为堆外内存, 如果是直接返回
             if (buf.isDirect()) {
                 return msg;
             }
-
+            // 转为堆外内存
             return newDirectBuffer(buf);
         }
 

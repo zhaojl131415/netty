@@ -508,6 +508,7 @@ public class UnpooledDirectByteBuf extends AbstractReferenceCountedByteBuf {
             tmpBuf = buffer.duplicate();
         }
         tmpBuf.clear().position(index).limit(index + length);
+        // 写出数据
         return out.write(tmpBuf);
     }
 
@@ -530,6 +531,7 @@ public class UnpooledDirectByteBuf extends AbstractReferenceCountedByteBuf {
     @Override
     public int readBytes(GatheringByteChannel out, int length) throws IOException {
         checkReadableBytes(length);
+        // 底层调用 out.write 写出数据
         int readBytes = getBytes(readerIndex, out, length, true);
         readerIndex += readBytes;
         return readBytes;

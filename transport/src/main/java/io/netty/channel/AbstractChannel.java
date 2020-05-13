@@ -958,6 +958,10 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
             int size;
             try {
+                /**
+                 * 如果是堆内buffer 转为堆外buffer
+                 * @see AbstractNioByteChannel#filterOutboundMessage(java.lang.Object)
+                 */
                 msg = filterOutboundMessage(msg);
                 size = pipeline.estimatorHandle().size(msg);
                 if (size < 0) {
@@ -968,7 +972,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 ReferenceCountUtil.release(msg);
                 return;
             }
-
+            // 累加出栈buffer
             outboundBuffer.addMessage(msg, size, promise);
         }
 
@@ -982,6 +986,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
             }
 
             outboundBuffer.addFlush();
+            // 执行写回数据
             flush0();
         }
 
@@ -1015,6 +1020,10 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
             }
 
             try {
+                /**
+                 * 执行写回数据
+                 * @see AbstractNioByteChannel#doWrite(io.netty.channel.ChannelOutboundBuffer)
+                 */
                 doWrite(outboundBuffer);
             } catch (Throwable t) {
                 if (t instanceof IOException && config().isAutoClose()) {
@@ -1201,6 +1210,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
     /**
      * Flush the content of the given buffer to the remote peer.
+     * 将给定缓冲区的内容刷新到远程对等点。
      */
     protected abstract void doWrite(ChannelOutboundBuffer in) throws Exception;
 
