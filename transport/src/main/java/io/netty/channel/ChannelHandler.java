@@ -174,6 +174,9 @@ import java.lang.annotation.Target;
  * {@link ChannelPipeline} to find out more about inbound and outbound operations,
  * what fundamental differences they have, how they flow in a  pipeline,  and how to handle
  * the operation in your application.
+ *
+ * Handler是扩展功能的核心，通过扩展组合不同的Handler实现各种业务应用。
+ * 简单地Handler分为两种类型: Inbound和OutBound(也可以兼而有之)分别对应处理入站消息(对端发给当前Endpoint)和出站消息(当前Endpoint发给对端)。
  */
 public interface ChannelHandler {
 

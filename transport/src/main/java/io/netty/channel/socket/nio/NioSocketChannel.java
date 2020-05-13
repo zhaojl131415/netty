@@ -15,6 +15,7 @@
  */
 package io.netty.channel.socket.nio;
 
+import io.netty.buffer.AbstractByteBuf;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelException;
@@ -352,8 +353,12 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
         final RecvByteBufAllocator.Handle allocHandle = unsafe().recvBufAllocHandle();
         // byteBuf.writableBytes() 返回可写的字节数
         allocHandle.attemptedBytesRead(byteBuf.writableBytes());
-        // 将指定通道的内容从当前{@code writerIndex}开始传输到此缓冲区，并根据传输的字节数增加{@code writerIndex}。
-        // 如果{@code this.writableBytes}小于{@code length}， {@link #ensureWritable(int)}将被调用，以尝试扩展容量以适应。
+        /**
+         * 将指定通道的内容从当前{@code writerIndex}开始传输到此缓冲区，并根据传输的字节数增加{@code writerIndex}。
+         * 如果{@code this.writableBytes}小于{@code length}， {@link #ensureWritable(int)}将被调用，以尝试扩展容量以适应。
+         *
+         * @see AbstractByteBuf#writeBytes(java.nio.channels.ScatteringByteChannel, int)
+         */
         return byteBuf.writeBytes(javaChannel(), allocHandle.attemptedBytesRead());
     }
 

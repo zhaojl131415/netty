@@ -20,6 +20,7 @@ import io.netty.buffer.Unpooled;
 
 /**
  * A set of commonly used delimiters for {@link DelimiterBasedFrameDecoder}.
+ * 一组常用的{@link DelimiterBasedFrameDecoder}分隔符。
  */
 public final class Delimiters {
 

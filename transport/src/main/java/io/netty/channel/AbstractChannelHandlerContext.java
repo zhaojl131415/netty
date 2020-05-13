@@ -428,6 +428,12 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
                  * channelRead(this, msg)
                  * 递归调用, 从头节点往下遍历入栈处理器
                  * @see DefaultChannelPipeline.HeadContext#channelRead(io.netty.channel.ChannelHandlerContext, java.lang.Object)
+                 *
+                 * 这是个抽象类, 所有的解码器基本上都继承了这个类.
+                 * 如果pipeline中有多个解码器, 比如:FixedLengthFrameDecoder/LineBasedFrameDecoder,
+                 * 会多次调用这个抽象类的channelRead()方法, 在这个方法中会调用解码器的各自的decode()方法
+                 * @see io.netty.handler.codec.ByteToMessageDecoder#channelRead(io.netty.channel.ChannelHandlerContext, java.lang.Object)
+                 *
                  * @see com.zhao.NettyTestHandler#channelRead(io.netty.channel.ChannelHandlerContext, java.lang.Object)
                  * @see ServerBootstrap.ServerBootstrapAcceptor#channelRead(io.netty.channel.ChannelHandlerContext, java.lang.Object)
                  *

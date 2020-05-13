@@ -63,7 +63,8 @@ public interface RecvByteBufAllocator {
 
         /**
          * Increment the number of messages that have been read for the current read loop.
-         * @param numMessages The amount to increment by.
+         * 增加已为当前读循环读取的消息数量。
+         * @param numMessages The amount to increment by. 要增加的数量。
          */
         void incMessagesRead(int numMessages);
 

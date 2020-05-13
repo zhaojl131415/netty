@@ -244,6 +244,8 @@ import java.nio.charset.UnsupportedCharsetException;
  *
  * Please refer to {@link ByteBufInputStream} and
  * {@link ByteBufOutputStream}.
+ *
+ * 是netty提供的ByteBuffer升级版缓存，支持读写指针、堆外内存、对象池等特性。这是netty高性能很重要的一个原因。
  */
 public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
 
@@ -1595,6 +1597,9 @@ public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
     public abstract ByteBuf readSlice(int length);
 
     /**
+     * 从当前的{@code readerIndex}开始，返回这个缓冲区的子区域的一个新保留的片，
+     * 并根据新片的大小(= {@code length})增加{@code readerIndex}。
+     *
      * Returns a new retained slice of this buffer's sub-region starting at the current
      * {@code readerIndex} and increases the {@code readerIndex} by the size
      * of the new slice (= {@code length}).
