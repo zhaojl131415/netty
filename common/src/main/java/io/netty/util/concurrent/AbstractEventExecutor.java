@@ -44,8 +44,10 @@ public abstract class AbstractEventExecutor extends AbstractExecutorService impl
         this(null);
     }
 
+    /**
+     * @param parent NioEventExecutorGroup
+     */
     protected AbstractEventExecutor(EventExecutorGroup parent) {
-        // parent = NioEventLoopGroup
         this.parent = parent;
     }
 

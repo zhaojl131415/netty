@@ -136,7 +136,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
      */
     @Override
     void init(Channel channel) {
-        // 设置用户自定义的tcp参数
+        // 设置用户自定义的Option参数
         setChannelOptions(channel, newOptionsArray(), logger);
         // 设置用户自定义的attr参数
         setAttributes(channel, attrs0().entrySet().toArray(EMPTY_ATTRIBUTE_ARRAY));
@@ -159,7 +159,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
 
         /**
          * 将这个new ChannelInitializer<Channel>()添加到pipeline
-         * head - ChannelInitializer - tail
+         * 此时的pipeline: head - ChannelInitializer - tail
          *
          * {@link DefaultChannelPipeline#addLast(io.netty.util.concurrent.EventExecutorGroup, io.netty.channel.ChannelHandler...) }
          */
@@ -258,7 +258,7 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         @Override
         @SuppressWarnings("unchecked")
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
-            //
+            // 对于新建连接, 此channel为NioSocketChannel(netty对java SocketChannel的封装)
             final Channel child = (Channel) msg;
             // 往客户端的Channel中添加pipeline, 自定义的ChannelInitializer
             child.pipeline().addLast(childHandler);
@@ -269,6 +269,10 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
             try {
                 // 工作线程注册 NioSocketChannel
                 /**
+                 * 将此SocketChannel注册到childGroup(workerGroup),
+                 * 并在判断执行线程非Channel绑定的workerNioEventLoop时,
+                 * 启动worker线程执行具体的channel绑定任务
+                 *
                  * @see MultithreadEventLoopGroup#register(io.netty.channel.Channel)
                  */
                 childGroup.register(child).addListener(new ChannelFutureListener() {

@@ -404,11 +404,15 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
      * @param msg
      */
     static void invokeChannelRead(final AbstractChannelHandlerContext next, Object msg) {
+        // 非空判断
         final Object m = next.pipeline.touch(ObjectUtil.checkNotNull(msg, "msg"), next);
+        // 获取context绑定的Executor(即EventLoop或者EventLoopGroup)
         EventExecutor executor = next.executor();
+        // 判断当前线程即是EventLoop,那么在当前线程直接执行方法(想让与直接执行Runnable#run方法)
         if (executor.inEventLoop()) {
             next.invokeChannelRead(m);
         } else {
+            // 当前线程不是EventLoop, 那么需要将待执行方法封装成一个Runnable, 提交给Executor来异步线程执行
             executor.execute(new Runnable() {
                 @Override
                 public void run() {
@@ -419,6 +423,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
     }
 
     private void invokeChannelRead(Object msg) {
+        // 判断Handler是否处于可执行状态
         if (invokeHandler()) {
             try {
                 /**
@@ -443,6 +448,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
                 notifyHandlerException(t);
             }
         } else {
+            // 跳过当前Handler的处理, 直接传播给下级
             fireChannelRead(msg);
         }
     }
@@ -983,6 +989,8 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
 
     /**
      * 顺序找 入栈处理器
+     * 在pipelinet链表上获取正序的下一个Inbound类型Context, 如果非Inbound会跳过
+     *
      * @param mask
      * @return
      */
@@ -991,7 +999,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         EventExecutor currentExecutor = executor();
         do {
             ctx = ctx.next;
-        } while (skipContext(ctx, currentExecutor, mask, MASK_ONLY_INBOUND));
+        } while (skipContext(ctx, currentExecutor, mask, MASK_ONLY_INBOUND)); // 跳过所有非Inbound的handler
         return ctx;
     }
 

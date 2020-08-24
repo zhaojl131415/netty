@@ -40,7 +40,6 @@ public class TestByteBuf {
         // 读完之后，只是移动了readerIndex的位置，并不会丢弃已经被读过的数据
         System.out.println("3.ByteBuf中的内容为===============>" + Arrays.toString(buf.array()) + "\n");
 
-        //
         /**
          * 4.将读取的内容丢弃
          * 举例：

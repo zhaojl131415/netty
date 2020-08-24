@@ -93,9 +93,12 @@ public class DefaultChannelPipeline implements ChannelPipeline {
      * 默认通道管道
      *
      * Channel和Pipeline之间是互通的
-     *                          ┌----> head
-     * Channel <----> pipeline -┆
-     *                          └----> tail
+     *
+     *                           ┌----> head
+     *                           ┆       ∧
+     * Channel <----> pipeline <-┆       |
+     *                           ┆       ∨
+     *                           └----> tail
      *
      * @param channel NioServerSocketChannel
      */
@@ -1516,6 +1519,9 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
             /**
+             * 注意这里是context.fireChannelRead, 而不是pipeline的同名方法
+             * HeadContext未重写此方法, 这里调用父类AbstractChannelHandlerContext的实现
+             *
              * @see AbstractChannelHandlerContext#fireChannelRead(java.lang.Object)
              */
             ctx.fireChannelRead(msg);

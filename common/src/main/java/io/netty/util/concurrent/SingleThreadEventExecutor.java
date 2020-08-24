@@ -165,10 +165,10 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     /**
      *
      * @param parent NioEventExecutorGroup
-     * @param executor
+     * @param executor {@link ThreadPerTaskExecutor}
      * @param addTaskWakesUp false
-     * @param taskQueue
-     * @param rejectedHandler
+     * @param taskQueue 任务队列
+     * @param rejectedHandler 拒绝策略: 丢弃任务，并抛出RejectedExecutionException异常
      */
     protected SingleThreadEventExecutor(EventExecutorGroup parent, Executor executor,
                                         boolean addTaskWakesUp, Queue<Runnable> taskQueue,
@@ -181,6 +181,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         this.executor = ThreadExecutorMap.apply(executor, this);
         // 无界任务队列
         this.taskQueue = ObjectUtil.checkNotNull(taskQueue, "taskQueue");
+        // 拒绝策略
         this.rejectedExecutionHandler = ObjectUtil.checkNotNull(rejectedHandler, "rejectedHandler");
     }
 
@@ -1058,6 +1059,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
                 updateLastExecutionTime();
                 try {
                     /**
+                     * 这一步并不启动线程, 在当前这个线程池executor中的线程调用run方法
                      * @see io.netty.channel.nio.NioEventLoop#run()
                      */
                     SingleThreadEventExecutor.this.run();

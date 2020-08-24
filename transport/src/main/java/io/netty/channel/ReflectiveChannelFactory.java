@@ -26,6 +26,7 @@ import java.lang.reflect.Constructor;
  */
 public class ReflectiveChannelFactory<T extends Channel> implements ChannelFactory<T> {
 
+    // 用于存储类的构造器对象
     private final Constructor<? extends T> constructor;
 
     /**

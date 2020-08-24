@@ -56,7 +56,7 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
      *
      *
      *
-     * @param nThreads 没有指定，默认为0， 如果为0，赋值为cpu核数的两倍
+     * @param nThreads 主节点线程数一般为1; 工作节点线程数一般不指定，默认为0，如果为0，会赋值为cpu核数的两倍
      * @param executor 没有指定，默认为null
      * @param args: selectorProvider 可以通过它调用openSelector()/openServerSocketChannel()方法打开Selector/ServerSocketChannel对象
      * @param args: selectStrategyFactory  默认选择策略工厂new DefaultSelectStrategyFactory();
@@ -141,9 +141,12 @@ public abstract class MultithreadEventExecutorGroup extends AbstractEventExecuto
         }
 
         /**
+         * 从NioEventLoop的对象数组取出一个NioEventLoop
+         *
          * chooserFactory: 默认事件执行选择器工厂
          * children：NioEventLoop的对象数组
          *
+         * @see DefaultEventExecutorChooserFactory#newChooser(io.netty.util.concurrent.EventExecutor[])
          * chooser: 为以下两种其中的一种, 没觉得两种有什么有多大的区别, 只是PowerOfTwoEventExecutorChooser性能更好一点
          * @see DefaultEventExecutorChooserFactory.PowerOfTwoEventExecutorChooser
          * @see DefaultEventExecutorChooserFactory.GenericEventExecutorChooser

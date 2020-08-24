@@ -48,6 +48,8 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
      *
      * Create a new instance using the specified number of threads, {@link ThreadFactory} and the
      * {@link SelectorProvider} which is returned by {@link SelectorProvider#provider()}.
+     *
+     * @param nThreads 主节点线程数一般为1; 工作节点线程数一般不指定，默认为0
      */
     public NioEventLoopGroup(int nThreads) {
         this(nThreads, (Executor) null);
@@ -70,12 +72,13 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
     }
 
     /**
-     * @param nThreads 主节点线程数一般为1, 工作节点线程数一般不设置, 默认为:cpu核数*2
+     * @param nThreads 主节点线程数一般为1; 工作节点线程数一般不指定，默认为0
      * @param executor 默认为null
      */
     public NioEventLoopGroup(int nThreads, Executor executor) {
         /**
-         * SelectorProvider.provider(): 可以通过它调用openSelector()/openServerSocketChannel()方法打开Selector/ServerSocketChannel对象
+         * SelectorProvider.provider(): 返回默认的SelectorProvider, 可以通过调用它的openSelector()/openServerSocketChannel()方法打开Selector/ServerSocketChannel对象
+         *
          * Selector.open()底层就是调用：SelectorProvider.provider().openSelector();
          * ServerSocketChannel.open()底层就是调用：SelectorProvider.provider().openServerSocketChannel();
          */
@@ -97,9 +100,9 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
     }
 
     /**
-     * @param nThreads 没有指定，默认为0
+     * @param nThreads 主节点线程数一般为1; 工作节点线程数一般不指定，默认为0
      * @param executor 没有指定，默认为null
-     * @param selectorProvider 可以通过它调用openSelector()/openServerSocketChannel()方法打开Selector/ServerSocketChannel对象
+     * @param selectorProvider 默认的选择器提供者, 可以通过调用它的openSelector()/openServerSocketChannel()方法打开Selector/ServerSocketChannel对象
      */
     public NioEventLoopGroup(
             int nThreads, Executor executor, final SelectorProvider selectorProvider) {
@@ -109,7 +112,7 @@ public class NioEventLoopGroup extends MultithreadEventLoopGroup {
 
     /**
      *
-     * @param nThreads 没有指定，默认为0
+     * @param nThreads 主节点线程数一般为1; 工作节点线程数一般不指定，默认为0
      * @param executor 没有指定，默认为null
      * @param selectorProvider 可以通过它调用openSelector()/openServerSocketChannel()方法打开Selector/ServerSocketChannel对象
      * @param selectStrategyFactory  默认选择策略工厂new DefaultSelectStrategyFactory();

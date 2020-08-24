@@ -84,7 +84,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
      * @see AbstractBootstrap#initAndRegister() 通过构造方法反射创建NioServerSocketChannel调用
      */
     public NioServerSocketChannel() {
-        // newSocket(DEFAULT_SELECTOR_PROVIDER)相当于nio原生调用：SelectorProvider.provider().openServerSocketChannel()
+        // newSocket(DEFAULT_SELECTOR_PROVIDER) 打开ServerSocketChannel, 相当于nio原生调用：SelectorProvider.provider().openServerSocketChannel()
         this(newSocket(DEFAULT_SELECTOR_PROVIDER));
     }
 
@@ -101,7 +101,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
      * @param channel NioServerSocketChannel
      */
     public NioServerSocketChannel(ServerSocketChannel channel) {
-        // SelectionKey.OP_ACCEPT 连接事件
+        // 给channel绑定SelectionKey.OP_ACCEPT 连接事件
         super(null, channel, SelectionKey.OP_ACCEPT);
         config = new NioServerSocketChannelConfig(this, javaChannel().socket());
     }

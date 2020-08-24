@@ -69,7 +69,7 @@ public class DefaultThreadFactory implements ThreadFactory {
     /**
      *
      * @param poolType NioEventLoopGroup.class
-     * @param daemon 表示通过工厂创建的线程是否是守护线程false
+     * @param daemon false 表示通过工厂创建的线程是否是守护线程
      * @param priority Thread.MAX_PRIORITY 线程最高优先级 10
      */
     public DefaultThreadFactory(Class<?> poolType, boolean daemon, int priority) {
@@ -86,6 +86,7 @@ public class DefaultThreadFactory implements ThreadFactory {
         ObjectUtil.checkNotNull(poolType, "poolType");
         // 获取类名
         String poolName = StringUtil.simpleClassName(poolType);
+        // 长度判断
         switch (poolName.length()) {
             case 0:
                 return "unknown";
@@ -96,6 +97,7 @@ public class DefaultThreadFactory implements ThreadFactory {
                 // isUpperCase 判断指定字符是否为大写字母
                 // isLowerCase 判断指定字符是否为小写字母
                 if (Character.isUpperCase(poolName.charAt(0)) && Character.isLowerCase(poolName.charAt(1))) {
+                    // 截取首字母转为小写
                     return Character.toLowerCase(poolName.charAt(0)) + poolName.substring(1);
                 } else {
                     return poolName;
@@ -106,20 +108,20 @@ public class DefaultThreadFactory implements ThreadFactory {
     /**
      *
      * @param poolName  nioEventLoopGroup
-     * @param daemon false
+     * @param daemon false 表示通过工厂创建的线程是否是守护线程
      * @param priority Thread.MAX_PRIORITY 线程最高优先级 10
-     * @param threadGroup
+     * @param threadGroup 线程组
      */
     public DefaultThreadFactory(String poolName, boolean daemon, int priority, ThreadGroup threadGroup) {
         ObjectUtil.checkNotNull(poolName, "poolName");
 
+        // 判断线程优先级
         if (priority < Thread.MIN_PRIORITY || priority > Thread.MAX_PRIORITY) {
             throw new IllegalArgumentException(
                     "priority: " + priority + " (expected: Thread.MIN_PRIORITY <= priority <= Thread.MAX_PRIORITY)");
         }
         /**
-         * 为了让创建出来的名字不冲突:
-         * 使用了poolId.incrementAndGet() 原子计数器
+         * 为了让创建出来的名字不冲突: 使用了poolId.incrementAndGet() 原子计数器
          * nioEventLoopGroup-(原子计数器++)-
          */
         prefix = poolName + '-' + poolId.incrementAndGet() + '-';
@@ -128,6 +130,11 @@ public class DefaultThreadFactory implements ThreadFactory {
         this.threadGroup = threadGroup;
     }
 
+    /**
+     * @param poolName nioEventLoopGroup
+     * @param daemon false 表示通过工厂创建的线程是否是守护线程
+     * @param priority Thread.MAX_PRIORITY 线程最高优先级 10
+     */
     public DefaultThreadFactory(String poolName, boolean daemon, int priority) {
         // System.getSecurityManager() == null 判断是否有安全管理器, 判断操作时是否有权限
         this(poolName, daemon, priority, System.getSecurityManager() == null ?

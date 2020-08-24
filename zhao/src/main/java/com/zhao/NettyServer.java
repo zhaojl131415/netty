@@ -39,7 +39,8 @@ public class NettyServer {
                 // 表示服务器启动过程中，pipeline需要经过哪些流程，这里NettyTestHandler最终的顶层接口为ChannelHandler，
                 // 是netty的一大核心概念，表示数据流经过的处理器
                 .handler(new NettyTestHandler())
-                // 客户端处理器：netty底层pipeline中只有头尾节点, 需要自定义处理器
+                // 客户端处理器：这里的客户端其实不是真正的客户端, 而是在服务端上与客户端对应的客户端连接
+                // netty底层pipeline中只有头尾节点, 需要自定义处理器
                 // 表示一条新的连接进来之后，pipeline需要经过哪些流程，也就是上面所说的，老板如何给工人配活
                 .childHandler(new ChannelInitializer<NioSocketChannel>() {
                     @Override

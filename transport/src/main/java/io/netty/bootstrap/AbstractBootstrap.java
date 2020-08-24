@@ -52,6 +52,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     // bossGroup
     volatile EventLoopGroup group;
     @SuppressWarnings("deprecation")
+    // new ReflectiveChannelFactory<C>(NioServerSocketChannel)
     private volatile ChannelFactory<? extends C> channelFactory;
     private volatile SocketAddress localAddress;
 
@@ -81,13 +82,15 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     /**
      * The {@link EventLoopGroup} which is used to handle all the events for the to-be-created
      * {@link Channel}
+     *
+     * @param group bossGroup
      */
     public B group(EventLoopGroup group) {
         ObjectUtil.checkNotNull(group, "group");
         if (this.group != null) {
             throw new IllegalStateException("group set already");
         }
-        // 处理用户连接的group = bossGroup
+        // 处理用户连接的group
         this.group = group;
         return self();
     }
@@ -98,6 +101,8 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     }
 
     /**
+     * NettyServer启动类中, serverBootstrap.channel()调用
+     *
      * The {@link Class} which is used to create {@link Channel} instances from.
      * You either use this or {@link #channelFactory(io.netty.channel.ChannelFactory)} if your
      * {@link Channel} implementation has no no-args constructor.
@@ -134,7 +139,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
      * has a no-args constructor, its highly recommend to just use {@link #channel(Class)} to
      * simplify your code.
      *
-     * @param channelFactory new ReflectiveChannelFactory<C>(NioServerSocketChannel);
+     * @param channelFactory new ReflectiveChannelFactory<C>(NioServerSocketChannel)
      */
     @SuppressWarnings({ "unchecked", "deprecation" })
     public B channelFactory(io.netty.channel.ChannelFactory<? extends C> channelFactory) {
@@ -272,6 +277,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
      * Create a new {@link Channel} and bind it.
      */
     public ChannelFuture bind(SocketAddress localAddress) {
+        // 校验
         validate();
         return doBind(ObjectUtil.checkNotNull(localAddress, "localAddress"));
     }

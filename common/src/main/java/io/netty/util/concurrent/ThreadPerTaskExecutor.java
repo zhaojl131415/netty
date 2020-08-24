@@ -25,8 +25,12 @@ import java.util.concurrent.ThreadFactory;
  * 参数为:Runnable类型,表示就是用来执行传进去的任务的
  */
 public final class ThreadPerTaskExecutor implements Executor {
+    // DefaultThreadFactory
     private final ThreadFactory threadFactory;
 
+    /**
+     * @param threadFactory DefaultThreadFactory
+     */
     public ThreadPerTaskExecutor(ThreadFactory threadFactory) {
         // checkNotNull:判断是否为空，如果为空抛异常，不为空直接返回在赋值
         this.threadFactory = ObjectUtil.checkNotNull(threadFactory, "threadFactory");

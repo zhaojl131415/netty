@@ -106,7 +106,6 @@ public abstract class SingleThreadEventLoop extends SingleThreadEventExecutor im
          * promise.channel() = NioSocketChannel
          * promise.channel().unsafe() = {@link AbstractChannel#unsafe} = {@link AbstractNioByteChannel.NioByteUnsafe}()
          *
-         *
          * @see AbstractChannel.AbstractUnsafe#register(io.netty.channel.EventLoop, io.netty.channel.ChannelPromise)
          */
         promise.channel().unsafe().register(this, promise);

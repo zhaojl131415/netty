@@ -157,7 +157,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
 
         // 打开Selector
         final SelectorTuple selectorTuple = openSelector();
-        // 子类包装的selector 底层数据结构也是被替换了的
+        // 子类包装的selector: SelectedSelectionKeySetSelector 底层数据结构也是被替换了的
         this.selector = selectorTuple.selector;
         // 替换了数据结构selectedKeys publicSelectedKeys的原生selector
         this.unwrappedSelector = selectorTuple.unwrappedSelector;
@@ -193,12 +193,12 @@ public final class NioEventLoop extends SingleThreadEventLoop {
 
     /**
      * 创建Selector
-     * 将Selector中的${@link SelectorImpl#selectedKeys}和{@link SelectorImpl#publicSelectedKeys}数据类型从HashSet改为数组
+     * 将Selector中的{@link SelectorImpl#selectedKeys}和{@link SelectorImpl#publicSelectedKeys}数据类型从HashSet改为数组
      */
     private SelectorTuple openSelector() {
         final Selector unwrappedSelector;
         try {
-            // 其实就是：SelectorProvider.provider().openServerSocketChannel()
+            // 其实就是调用：SelectorProvider.provider().openSelector()
             unwrappedSelector = provider.openSelector();
         } catch (IOException e) {
             throw new ChannelException("failed to open a new selector", e);
@@ -210,7 +210,9 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             return new SelectorTuple(unwrappedSelector);
         }
 
-        // 加载SelectorImpl类，得到SelectorImpl的类类型
+        /**
+         * 加载{@link SelectorImpl}类，得到SelectorImpl的类类型
+         */
         Object maybeSelectorImplClass = AccessController.doPrivileged(new PrivilegedAction<Object>() {
             @Override
             public Object run() {
@@ -225,7 +227,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             }
         });
 
-        // 这里一般不会进
+        // 取反, 这里一般不会进
         if (!(maybeSelectorImplClass instanceof Class) ||
                 // ensure the current selector implementation is what we can instrument.
                 !((Class<?>) maybeSelectorImplClass).isAssignableFrom(unwrappedSelector.getClass())) {
@@ -248,10 +250,12 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             public Object run() {
                 try {
                     /**
+                     * 反射获取SelectorImpl的selectedKeys属性字段
                      * @see SelectorImpl#selectedKeys
                      */
                     Field selectedKeysField = selectorImplClass.getDeclaredField("selectedKeys");
                     /**
+                     * 反射获取SelectorImpl的publicSelectedKeys属性字段
                      * @see SelectorImpl#publicSelectedKeys
                      */
                     Field publicSelectedKeysField = selectorImplClass.getDeclaredField("publicSelectedKeys");

@@ -48,7 +48,7 @@ public abstract class MultithreadEventLoopGroup extends MultithreadEventExecutor
     /**
      * @see MultithreadEventExecutorGroup#MultithreadEventExecutorGroup(int, Executor, Object...)\
      *
-     * @param nThreads 没有指定，默认为0
+     * @param nThreads 主节点线程数一般为1; 工作节点线程数一般不指定，默认为0
      * @param executor 没有指定，默认为null
      * @param args: selectorProvider 可以通过它调用openSelector()/openServerSocketChannel()方法打开Selector/ServerSocketChannel对象
      * @param args: selectStrategyFactory  默认选择策略工厂new DefaultSelectStrategyFactory();
@@ -84,7 +84,7 @@ public abstract class MultithreadEventLoopGroup extends MultithreadEventExecutor
 
     @Override
     public EventLoop next() {
-        // 从executors所表示的NioEventLoop对象数组中返回NioEventLoop对象
+        // 从executors所表示的NioEventLoop对象数组中取出一个NioEventLoop对象
         return (EventLoop) super.next();
     }
 
@@ -99,7 +99,7 @@ public abstract class MultithreadEventLoopGroup extends MultithreadEventExecutor
     @Override
     public ChannelFuture register(Channel channel) {
         /**
-         * next() = NioEventLoop: 从executors所表示的NioEventLoop对象数组中返回NioEventLoop对象
+         * next() = NioEventLoop: 从executors所表示的NioEventLoop对象数组中取出一个NioEventLoop对象
          * {@link SingleThreadEventLoop#register(io.netty.channel.Channel)}
          */
         return next().register(channel);
